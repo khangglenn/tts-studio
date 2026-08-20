@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+san-pham/
+sản phẩm/
+video_output/
+upload_images/
+scan_draft.json
+*.db
+.env
+.venv/
+venv/
