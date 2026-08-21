@@ -500,6 +500,49 @@ textarea::placeholder{color:#5a6172;}
           <input type="range" id="vidBrightness" min="30" max="170" value="100" style="width:100%;">
         </div>
 
+        <!-- Video Quality Settings -->
+        <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;">
+          <div style="font-weight:600;font-size:13px;">Chất lượng video</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Độ phân giải</label>
+              <select id="vidQuality" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;width:100%;">
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+                <option value="1080p" selected>1080p</option>
+                <option value="4k">4K</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">FPS</label>
+              <select id="vidFps" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;width:100%;">
+                <option value="24">24</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">CRF (chất lượng)</label>
+              <input type="range" id="vidCrf" min="18" max="28" value="23" style="width:100%;" oninput="$('vidCrfVal').textContent=this.value">
+              <span id="vidCrfVal" style="font-size:12px;color:var(--muted);">23</span>
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Preset (tốc độ nén)</label>
+              <select id="vidPreset" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;width:100%;">
+                <option value="ultrafast">Ultrafast</option>
+                <option value="superfast">Superfast</option>
+                <option value="veryfast">Veryfast</option>
+                <option value="faster">Faster</option>
+                <option value="fast" selected>Fast</option>
+                <option value="medium">Medium</option>
+                <option value="slow">Slow</option>
+                <option value="slower">Slower</option>
+                <option value="veryslow">Veryslow</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <!-- Output name -->
         <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;">
           <input type="text" id="vidOutputName" placeholder="Tên file (để trống = tự đặt)" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;">
@@ -1390,8 +1433,8 @@ $('btnVidRender').addEventListener('click', async () => {
   const btn = $('btnVidRender');
   btn.disabled = true; btn.textContent = 'Đang render...';
   $('vidProgress').style.display = '';
-  $('vidProgressInfo').textContent = 'Đang tạo video, vui lòng chờ...';
-  $('vidProgressFill').style.width = '30%';
+  $('vidProgressInfo').textContent = 'Khởi tạo...';
+  $('vidProgressFill').style.width = '0%';
   try {
     const res = await fetch('/api/video/create', {
       method: 'POST', headers: {'Content-Type':'application/json'},
@@ -1404,19 +1447,36 @@ $('btnVidRender').addEventListener('click', async () => {
         text_y: hasText ? Math.round(parseInt(input.style.top) / $('vidCanvas').offsetHeight * 100) : 85,
         brightness: parseInt($('vidBrightness').value),
         output_name: $('vidOutputName').value.trim(),
+        quality: $('vidQuality').value,
+        fps: parseInt($('vidFps').value),
+        crf: parseInt($('vidCrf').value),
+        preset: $('vidPreset').value,
       }),
     });
     const data = await res.json();
-    $('vidProgressFill').style.width = '100%';
-    if (data.ok) {
-      $('vidProgressInfo').textContent = '✓ ' + data.name + ' (' + data.size_mb + ' MB)';
-      loadVideoList();
-      loadVideoAudioList();
-    } else {
-      $('vidProgressInfo').textContent = '✗ ' + (data.error || 'Lỗi');
+    if (!data.id) { throw new Error(data.error || 'Không tạo được job'); }
+    
+    // Poll progress
+    let done = false;
+    while (!done) {
+      await new Promise(r => setTimeout(r, 800));
+      const status = await fetch('/api/video/status/' + data.id).then(r => r.json());
+      $('vidProgressFill').style.width = status.progress + '%';
+      $('vidProgressInfo').textContent = status.status === 'rendering' 
+        ? 'Đang render: ' + status.progress + '%'
+        : status.status === 'done' 
+          ? 'Hoàn tất!' 
+          : 'Lỗi: ' + (status.error || 'Unknown');
+      if (status.status === 'done') {
+        loadVideoList();
+        loadVideoAudioList();
+        done = true;
+      } else if (status.status === 'error') {
+        done = true;
+      }
     }
   } catch(e) {
-    $('vidProgressInfo').textContent = '✗ Lỗi kết nối server';
+    $('vidProgressInfo').textContent = '✗ Lỗi: ' + e.message;
   }
   btn.disabled = false; btn.textContent = 'Tạo video';
   setTimeout(() => { $('vidProgress').style.display = 'none'; }, 5000);

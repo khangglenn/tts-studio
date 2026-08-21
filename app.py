@@ -35,6 +35,8 @@ VIDEO_DIR = BASE_DIR / "video_output"
 VIDEO_DIR.mkdir(exist_ok=True)
 UPLOAD_IMG_DIR = BASE_DIR / "upload_images"
 UPLOAD_IMG_DIR.mkdir(exist_ok=True)
+PREVIEW_DIR = BASE_DIR / "preview"
+PREVIEW_DIR.mkdir(exist_ok=True)
 
 # ---- FFprobe để lấy duration audio ----
 FFPROBE = r"C:\Users\Khang\Desktop\ffmpeg\ffmpeg-8.1.2-essentials_build\bin\ffprobe.exe"
@@ -83,6 +85,9 @@ def _clear_scan_draft():
             SCAN_DRAFT_FILE.unlink()
 
 app = Flask(__name__)
+
+# Global dict để lưu tiến độ video render (module-level)
+VIDEO_RENDERS = {}
 
 # ---- Voice cache: load model 1 lần, render nhiều lần ----
 _voice = None
@@ -655,7 +660,8 @@ def api_video_preview_frame():
 @app.route("/api/video/create", methods=["POST"])
 def api_video_create():
     """Tạo video từ ảnh + audio + text overlay.
-    body: {image_url, audio_url, text, text_color, text_size, text_y, brightness, output_name}"""
+    body: {image_url, audio_url, text, text_color, text_size, text_y, brightness, output_name,
+           quality: "480p|720p|1080p|4k", fps: 30|60, crf: 18-28, preset: "ultrafast|superfast|veryfast|faster|fast|medium|slow|slower|veryslow"}"""
     data = request.get_json(force=True, silent=True) or {}
     img_url = data.get("image_url", "")
     audio_url = data.get("audio_url", "")
@@ -665,12 +671,37 @@ def api_video_create():
     text_y = data.get("text_y", 50)
     brightness = data.get("brightness", 100)
     output_name = data.get("output_name", "").strip()
+    
+    # Quality presets
+    quality = data.get("quality", "1080p")
+    fps = int(data.get("fps", 30))
+    crf = int(data.get("crf", 23))
+    preset = data.get("preset", "fast")
+    
+    QUALITY_MAP = {
+        "480p": (854, 480),
+        "720p": (1280, 720),
+        "1080p": (1920, 1080),
+        "4k": (3840, 2160),
+    }
+    vw, vh = QUALITY_MAP.get(quality, (1920, 1080))
+    fps = max(1, min(fps, 60))
+    crf = max(18, min(crf, 28))
+    preset = preset if preset in ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"] else "fast"
 
     if not img_url or not audio_url:
         return jsonify({"error": "Cần ảnh + audio"}), 400
 
     img_path = (UPLOAD_IMG_DIR / Path(img_url).name).resolve()
-    audio_path = (BASE_DIR / audio_url.lstrip("/")).resolve()
+    
+    # Map audio_url về đúng thư mục
+    if audio_url.startswith("/san-pham/"):
+        audio_path = (PRODUCT_DIR / Path(audio_url).name).resolve()
+    elif audio_url.startswith("/preview/"):
+        audio_path = (PREVIEW_DIR / Path(audio_url).name).resolve()
+    else:
+        audio_path = (BASE_DIR / audio_url.lstrip("/")).resolve()
+    
     if not img_path.exists():
         return jsonify({"error": "Ảnh không tồn tại"}), 404
     if not audio_path.exists():
@@ -698,7 +729,7 @@ def api_video_create():
             f":x=(w-text_w)/2:y=h*{text_y}/100-text_h/2"
         )
 
-    vf_parts = [f"scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2"]
+    vf_parts = [f"scale={vw}:{vh}:force_original_aspect_ratio=decrease,pad={vw}:{vh}:(ow-iw)/2:(oh-ih)/2,fps={fps}"]
     vf_parts.extend(filters)
 
     cmd = [
@@ -706,31 +737,56 @@ def api_video_create():
         "-loop", "1", "-i", str(img_path),
         "-i", str(audio_path),
         "-vf", ",".join(vf_parts),
-        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+        "-c:v", "libx264", "-preset", preset, "-crf", str(crf),
         "-c:a", "aac", "-b:a", "128k",
         "-shortest", "-t", str(dur),
         "-pix_fmt", "yuv420p",
+        "-progress", "pipe:1",
         str(VIDEO_DIR / output_name),
     ]
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        if r.returncode != 0:
-            return jsonify({"error": f"ffmpeg lỗi: {r.stderr[-500:]}"}), 500
-    except subprocess.TimeoutExpired:
-        return jsonify({"error": "ffmpeg timeout (>5 phút)"}), 500
 
-    out_path = VIDEO_DIR / output_name
-    if not out_path.exists():
-        return jsonify({"error": "Video không được tạo ra"}), 500
+    # Job ID và tiến độ render (luồng nền)
+    vid = uuid.uuid4().hex
+    VIDEO_RENDERS[vid] = {"progress": 0, "status": "rendering", "error": None, "file": None, "dur": dur}
 
-    size_mb = round(out_path.stat().st_size / 1024 / 1024, 2)
-    return jsonify({
-        "ok": True,
-        "name": output_name,
-        "url": f"/video-output/{output_name}",
-        "size_mb": size_mb,
-        "duration": round(dur, 2),
-    })
+    def _run_ffmpeg_thread():
+        try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   text=True, bufsize=1, universal_newlines=True)
+            for line in proc.stdout:
+                line = line.strip()
+                if line.startswith("out_time_ms="):
+                    try:
+                        ms = int(line.split("=")[1])
+                        pct = min(99, int((ms / 1_000_000) / dur * 100))
+                        VIDEO_RENDERS[vid]["progress"] = pct
+                    except:
+                        pass
+                elif line.startswith("progress=end"):
+                    VIDEO_RENDERS[vid]["progress"] = 100
+            proc.wait()
+            if proc.returncode != 0:
+                err = proc.stderr.read()[-500:] if proc.stderr else "Unknown error"
+                VIDEO_RENDERS[vid]["status"] = "error"
+                VIDEO_RENDERS[vid]["error"] = f"ffmpeg lỗi: {err}"
+            else:
+                VIDEO_RENDERS[vid]["status"] = "done"
+                VIDEO_RENDERS[vid]["file"] = output_name
+                VIDEO_RENDERS[vid]["progress"] = 100
+        except Exception as e:
+            VIDEO_RENDERS[vid]["status"] = "error"
+            VIDEO_RENDERS[vid]["error"] = str(e)
+
+    threading.Thread(target=_run_ffmpeg_thread, daemon=True).start()
+    return jsonify({"id": vid})
+
+
+@app.route("/api/video/status/<vid>")
+def api_video_status(vid):
+    r = VIDEO_RENDERS.get(vid)
+    if not r:
+        return jsonify({"error": "Không tìm thấy job"}), 404
+    return jsonify(r)
 
 
 @app.route("/video-output/<path:name>")
