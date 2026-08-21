@@ -9,3 +9,4 @@ scan_draft.json
 .env
 .venv/
 venv/
+tui_state.json
