@@ -41,6 +41,10 @@ PREVIEW_DIR.mkdir(exist_ok=True)
 # ---- FFprobe để lấy duration audio ----
 FFPROBE = r"C:\Users\Khang\Desktop\ffmpeg\ffmpeg-8.1.2-essentials_build\bin\ffprobe.exe"
 
+# Chạy subprocess KHÔNG nháy cửa sổ console (server chạy pythonw — không có console,
+# Windows sẽ tự tạo cửa sổ mới cho ffmpeg/ffprobe nếu không gắn cờ này)
+NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+
 
 def get_audio_duration(filepath: Path) -> float:
     """Lấy duration (giây) của file audio bằng ffprobe."""
@@ -48,7 +52,7 @@ def get_audio_duration(filepath: Path) -> float:
         r = subprocess.run(
             [FFPROBE, "-v", "error", "-show_entries", "format=duration",
              "-of", "default=noprint_wrappers=1:nokey=1", str(filepath)],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True, text=True, timeout=5, creationflags=NO_WINDOW,
         )
         return float(r.stdout.strip()) if r.stdout.strip() else 0.0
     except Exception:
@@ -212,7 +216,7 @@ def render_job(rid: str, text: str, settings: dict):
             raise RuntimeError("Không tìm thấy ffmpeg để xuất MP3")
         ff_args = [ff, "-y", "-i", tmp.name, "-codec:a", "libmp3lame", "-qscale:a", "2",
                    "-af", build_filter_chain(eq, volume, pitch)]
-        r = subprocess.run(ff_args + [str(out_path)], capture_output=True, text=True)
+        r = subprocess.run(ff_args + [str(out_path)], capture_output=True, text=True, creationflags=NO_WINDOW)
         os.unlink(tmp.name)
         if r.returncode != 0 or not out_path.exists():
             raise RuntimeError(f"ffmpeg lỗi khi xuất MP3: {(r.stderr or '')[-300:]}")
@@ -534,7 +538,7 @@ def api_merge():
         r = subprocess.run(
             [ff, "-y", "-f", "concat", "-safe", "0", "-i", str(list_txt),
              "-c", "copy", str(out_path)],
-            capture_output=True, timeout=600,
+            capture_output=True, timeout=600, creationflags=NO_WINDOW,
         )
         if r.returncode != 0 or not out_path.exists():
             err = r.stderr.decode("utf-8", errors="ignore")[-500:]
@@ -638,7 +642,7 @@ def api_video_preview_frame():
         "-of", "default=noprint_wrappers=1:nokey=1", str(img_path),
     ]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=5, creationflags=NO_WINDOW)
         wh = r.stdout.strip().split("\n")
         w, h = int(wh[0]), int(wh[1])
     except Exception:
@@ -650,7 +654,7 @@ def api_video_preview_frame():
         "-vf", vf, "-frames:v", "1", str(tmp_out),
     ]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=10, creationflags=NO_WINDOW)
         if r.returncode != 0:
             return jsonify({"error": f"ffmpeg: {r.stderr[:300]}"}), 500
         with open(tmp_out, "rb") as f:
@@ -768,7 +772,8 @@ def api_video_create():
     def _run_ffmpeg_thread():
         try:
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   text=True, bufsize=1, universal_newlines=True)
+                                   text=True, bufsize=1, universal_newlines=True,
+                                   creationflags=NO_WINDOW)
             for line in proc.stdout:
                 line = line.strip()
                 if line.startswith("out_time_ms="):
