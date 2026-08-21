@@ -175,12 +175,14 @@ def render_job(rid: str, text: str, settings: dict):
 
         parts = []
         done = 0
+        skipped = 0
         for i, s in enumerate(sentences):
             if not re.search(r"[A-Za-zÀ-ỹ0-9]", s):
                 continue
             try:
                 wav = tts.synth_sentence(voice, syn, s)
             except Exception:
+                skipped += 1
                 continue
             parts.append(wav)
             last_ch = s[-1] if s else ""
@@ -210,15 +212,14 @@ def render_job(rid: str, text: str, settings: dict):
             raise RuntimeError("Không tìm thấy ffmpeg để xuất MP3")
         ff_args = [ff, "-y", "-i", tmp.name, "-codec:a", "libmp3lame", "-qscale:a", "2",
                    "-af", build_filter_chain(eq, volume, pitch)]
-        subprocess.run(ff_args + [str(out_path)], capture_output=True)
+        r = subprocess.run(ff_args + [str(out_path)], capture_output=True, text=True)
         os.unlink(tmp.name)
+        if r.returncode != 0 or not out_path.exists():
+            raise RuntimeError(f"ffmpeg lỗi khi xuất MP3: {(r.stderr or '')[-300:]}")
 
         RENDERS[rid]["status"] = "done"
-        RENDERS[rid]["message"] = "Hoàn tất"
+        RENDERS[rid]["message"] = "Hoàn tất" + (f" (bỏ {skipped} câu đọc lỗi)" if skipped else "")
         RENDERS[rid]["file"] = out_name
-    except Exception as e:
-        RENDERS[rid]["status"] = "error"
-        RENDERS[rid]["error"] = str(e)
     finally:
         with RENDER_LOCK:
             _rendering = False
@@ -237,14 +238,18 @@ def api_tts():
     if not text:
         return jsonify({"error": "Vui lòng nhập văn bản"}), 400
 
+    now_ts = datetime.now().timestamp()
     with RENDER_LOCK:
+        for k in [k for k, v in RENDERS.items()
+                  if v.get("status") in ("done", "error") and now_ts - v.get("ts", 0) > 7200]:
+            RENDERS.pop(k, None)
         if _rendering:
             return jsonify({"error": "Đang render audio khác, chờ xong rồi thử lại"}), 409
         _rendering = True
 
     rid = uuid.uuid4().hex
     RENDERS[rid] = {
-        "status": "queued", "progress": 0, "total": 0,
+        "status": "queued", "progress": 0, "total": 0, "ts": now_ts,
         "message": "Bắt đầu...", "error": None, "file": None,
         "text_preview": text[:80],
     }
@@ -616,17 +621,17 @@ def api_video_preview_frame():
         return jsonify({"error": "Ảnh không tồn tại"}), 404
 
     import base64
-    # Tạo preview bằng ffmpeg
+    # Tạo preview bằng ffmpeg — text ghi qua textfile để chịu được mọi ký tự đặc biệt
+    txt_file = None
     filters = []
     if brightness != 100:
         filters.append(f"eq=brightness={(brightness - 100) / 100}")
-
-    drawtext = f"drawtext=text='{text}':fontcolor={text_color}:fontsize={text_size}:x=(w-text_w)/2:y=h*{text_y}/100-text_h/2"
-    if filters:
-        filters.append(drawtext)
-        vf = ",".join(filters)
-    else:
-        vf = drawtext
+    if text:
+        txt_name = f"_overlay_{uuid.uuid4().hex[:8]}.txt"
+        txt_file = BASE_DIR / txt_name
+        txt_file.write_text(text, encoding="utf-8")
+        filters.append(f"drawtext=textfile={txt_name}:fontcolor={text_color}:fontsize={text_size}:x=(w-text_w)/2:y=h*{text_y}/100-text_h/2:expansion=none")
+    vf = ",".join(filters) if filters else "null"
 
     cmd = [
         FFPROBE, "-v", "error", "-show_entries", "stream=width,height",
@@ -655,6 +660,8 @@ def api_video_preview_frame():
         return jsonify({"error": str(e)}), 500
     finally:
         tmp_out.unlink(missing_ok=True)
+        if txt_file:
+            txt_file.unlink(missing_ok=True)
 
 
 @app.route("/api/video/create", methods=["POST"])
@@ -717,23 +724,28 @@ def api_video_create():
     if dur <= 0:
         return jsonify({"error": "Audio rỗng hoặc không đọc được"}), 400
 
-    # Build ffmpeg filter
+    # Build ffmpeg filter — text ghi qua textfile để chịu được phẩy/nháy/% (escape inline không đủ)
+    txt_file = None
     filters = []
     if brightness != 100:
         filters.append(f"eq=brightness={(brightness - 100) / 100}")
-
     if text:
-        safe_text = text.replace("'", "'\\''").replace(":", "\\:")
+        txt_name = f"_overlay_{uuid.uuid4().hex[:8]}.txt"
+        txt_file = BASE_DIR / txt_name
+        txt_file.write_text(text, encoding="utf-8")
         filters.append(
-            f"drawtext=text='{safe_text}':fontcolor={text_color}:fontsize={text_size}"
-            f":x=(w-text_w)/2:y=h*{text_y}/100-text_h/2"
+            f"drawtext=textfile={txt_name}:fontcolor={text_color}:fontsize={text_size}"
+            f":x=(w-text_w)/2:y=h*{text_y}/100-text_h/2:expansion=none"
         )
 
-    vf_parts = [f"scale={vw}:{vh}:force_original_aspect_ratio=decrease,pad={vw}:{vh}:(ow-iw)/2:(oh-ih)/2,fps={fps}"]
+    # format=rgba trước scale/pad: ảnh PNG trong suốt không bị pad ăn sai màu (bài học _make_video.py)
+    vf_parts = [f"format=rgba,scale={vw}:{vh}:force_original_aspect_ratio=decrease,pad={vw}:{vh}:(ow-iw)/2:(oh-ih)/2,fps={fps}"]
     vf_parts.extend(filters)
 
     cmd = [
         tts.FFMPEG, "-y",
+        # -nostats -loglevel error: stderr gần như trống → không bao giờ đầy pipe gây treo render dài
+        "-nostats", "-loglevel", "error",
         "-loop", "1", "-i", str(img_path),
         "-i", str(audio_path),
         "-vf", ",".join(vf_parts),
@@ -745,9 +757,13 @@ def api_video_create():
         str(VIDEO_DIR / output_name),
     ]
 
-    # Job ID và tiến độ render (luồng nền)
+    # Job ID và tiến độ render (luồng nền) — dọn job cũ >2h cho nhẹ bộ nhớ
+    now_ts = datetime.now().timestamp()
+    for k in [k for k, v in VIDEO_RENDERS.items()
+              if v.get("status") in ("done", "error") and now_ts - v.get("ts", 0) > 7200]:
+        VIDEO_RENDERS.pop(k, None)
     vid = uuid.uuid4().hex
-    VIDEO_RENDERS[vid] = {"progress": 0, "status": "rendering", "error": None, "file": None, "dur": dur}
+    VIDEO_RENDERS[vid] = {"progress": 0, "status": "rendering", "error": None, "file": None, "dur": dur, "ts": now_ts}
 
     def _run_ffmpeg_thread():
         try:
@@ -776,6 +792,9 @@ def api_video_create():
         except Exception as e:
             VIDEO_RENDERS[vid]["status"] = "error"
             VIDEO_RENDERS[vid]["error"] = str(e)
+        finally:
+            if txt_file:
+                txt_file.unlink(missing_ok=True)
 
     threading.Thread(target=_run_ffmpeg_thread, daemon=True).start()
     return jsonify({"id": vid})

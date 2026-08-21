@@ -1,0 +1,20 @@
+{
+ "speed": 1.3,
+ "pause": 0.18,
+ "pause_comma": 0.18,
+ "noise_scale": 0.667,
+ "noise_w": 0.8,
+ "eq": "none",
+ "volume": 1.0,
+ "pitch": 0.0,
+ "video": {
+  "quality": "1080p",
+  "fps": 30,
+  "crf": 23,
+  "preset": "fast",
+  "text_color": "#FFFFFF",
+  "text_size": 48,
+  "text_y": 85,
+  "brightness": 100
+ }
+}

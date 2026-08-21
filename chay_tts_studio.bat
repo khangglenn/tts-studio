@@ -1,14 +1,16 @@
 @echo off
 chcp 65001 >nul
-title TTS Studio - Giong Ngoc Huyen
 cd /d "%~dp0"
-echo.
-echo  ============================================
-echo   TTS Studio - Giong Ngoc Huyen (Piper)
-echo   Dang khoi dong server...
-echo  ============================================
-echo.
-python app.py
-echo.
-echo Server da dung.
-pause
+
+rem Neu server dang chay roi -> chi mo trinh duyet, khong loi port
+netstat -ano | findstr :5000 | findstr LISTENING >nul 2>&1
+if %errorlevel%==0 (
+    start "" http://127.0.0.1:5000/
+    exit /b
+)
+
+rem Khoi dong AN (pythonw = khong cua so terminal), roi mo trinh duyet
+start "" /b pythonw.exe app.py
+timeout /t 2 /nobreak >nul
+start "" http://127.0.0.1:5000/
+exit /b

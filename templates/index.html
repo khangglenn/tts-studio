@@ -1481,6 +1481,98 @@ $('btnVidRender').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = 'Tạo video';
   setTimeout(() => { $('vidProgress').style.display = 'none'; }, 5000);
 });
+
+// ---------- AUTO-SAVE chống mất dữ liệu khi F5 / đóng mở lại ----------
+const LS_KEY = 'tts_studio_state';
+function collectState() {
+  return {
+    view: document.querySelector('.nav-item.active')?.dataset.view || 'home',
+    text: $('textInput') ? $('textInput').value : '',
+    home: { speed: $('speedInput').value, vol: $('volInput').value, pitch: $('pitchInput').value, eq: $('eqInput').value },
+    settings: { speed: $('setSpeed').value, vol: $('setVol').value, pitch: $('setPitch').value, eq: $('setEq').value },
+    video: {
+      img: vidImageURL,
+      text: $('vidOverlayText').value,
+      textShown: $('vidOverlayText').style.display === 'block',
+      textLeft: $('vidOverlayText').style.left,
+      textTop: $('vidOverlayText').style.top,
+      color: $('vidTextColor').value,
+      size: $('vidTextSize').value,
+      bright: $('vidBrightness').value,
+      quality: $('vidQuality').value, fps: $('vidFps').value,
+      crf: $('vidCrf').value, preset: $('vidPreset').value,
+      outName: $('vidOutputName').value,
+      audio: $('vidAudioSelect').value,
+    },
+  };
+}
+let _saveTimer = null;
+function saveState() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(collectState())); } catch(e) {}
+  }, 400);
+}
+function restoreState() {
+  let s;
+  try { s = JSON.parse(localStorage.getItem(LS_KEY)); } catch(e) { return; }
+  if (!s) return;
+  if (typeof s.text === 'string' && s.text) { $('textInput').value = s.text; $('charCount').textContent = s.text.length; }
+  if (s.home) {
+    if (s.home.speed) $('speedInput').value = s.home.speed;
+    if (s.home.vol) $('volInput').value = s.home.vol;
+    if (s.home.pitch) $('pitchInput').value = s.home.pitch;
+    if (s.home.eq) $('eqInput').value = s.home.eq;
+  }
+  if (s.settings) {
+    if (s.settings.speed) $('setSpeed').value = s.settings.speed;
+    if (s.settings.vol) $('setVol').value = s.settings.vol;
+    if (s.settings.pitch) $('setPitch').value = s.settings.pitch;
+    if (s.settings.eq) $('setEq').value = s.settings.eq;
+  }
+  if (s.video) {
+    const v = s.video;
+    if (v.img) {
+      vidImageURL = v.img;
+      $('vidCanvas').style.display = '';
+      $('vidImgEl').src = v.img;
+      $('vidImgEl').onerror = () => { vidImageURL = null; $('vidCanvas').style.display = 'none'; $('vidTextSettings').style.display = 'none'; $('vidBrightSettings').style.display = 'none'; };
+      $('vidTextSettings').style.display = '';
+      $('vidBrightSettings').style.display = '';
+    }
+    if (v.text) $('vidOverlayText').value = v.text;
+    if (v.textShown) {
+      $('vidOverlayText').style.display = 'block';
+      if (v.textLeft) $('vidOverlayText').style.left = v.textLeft;
+      if (v.textTop) $('vidOverlayText').style.top = v.textTop;
+    }
+    if (v.color) { $('vidTextColor').value = v.color; $('vidOverlayText').style.color = v.color; }
+    if (v.size) { $('vidTextSize').value = v.size; $('vidTextSizeVal').textContent = v.size; $('vidOverlayText').style.fontSize = v.size + 'px'; }
+    if (v.bright) $('vidBrightness').value = v.bright;
+    if (v.quality) $('vidQuality').value = v.quality;
+    if (v.fps) $('vidFps').value = v.fps;
+    if (v.crf) $('vidCrf').value = v.crf;
+    if (v.preset) $('vidPreset').value = v.preset;
+    if (v.outName) $('vidOutputName').value = v.outName;
+    if (v.audio) loadVideoAudioList().then(() => { $('vidAudioSelect').value = v.audio; });
+  }
+  if (s.view && s.view !== 'home') {
+    const item = document.querySelector(`.nav-item[data-view="${s.view}"]`);
+    if (item) item.click();
+  }
+}
+['textInput','speedInput','volInput','pitchInput','eqInput','setSpeed','setVol','setPitch','setEq',
+ 'vidOverlayText','vidTextColor','vidTextSize','vidBrightness','vidQuality','vidFps','vidCrf','vidPreset','vidOutputName','vidAudioSelect']
+  .forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener('input', saveState);
+    el.addEventListener('change', saveState);
+  });
+window.addEventListener('beforeunload', () => {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(collectState())); } catch(e) {}
+});
+restoreState();
 </script>
 </body>
 </html>
