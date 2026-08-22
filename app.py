@@ -19,8 +19,18 @@ from pathlib import Path
 
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
-# ---- Đường dẫn pipeline TTS (dùng lại module có sẵn) ----
-PIPELINE_DIR = Path(r"C:\Users\Khang\Desktop\dịch tryện\Nghiên cứu giọng kênh\piper_ngochuyen")
+# ---- Đường dẫn pipeline TTS: env TTS_PIPELINE_DIR -> ./piper cạnh app.py (portable) -> máy LO ----
+def _find_pipeline_dir() -> Path:
+    env = os.environ.get("TTS_PIPELINE_DIR", "")
+    if env and (Path(env) / "tts_ngochuyen.py").is_file():
+        return Path(env)
+    cand = Path(__file__).resolve().parent / "piper"
+    if (cand / "tts_ngochuyen.py").is_file():
+        return cand
+    return Path(r"C:\Users\Khang\Desktop\dịch tryện\Nghiên cứu giọng kênh\piper_ngochuyen")
+
+
+PIPELINE_DIR = _find_pipeline_dir()
 if str(PIPELINE_DIR) not in sys.path:
     sys.path.insert(0, str(PIPELINE_DIR))
 
@@ -39,9 +49,26 @@ PREVIEW_DIR = BASE_DIR / "preview"
 PREVIEW_DIR.mkdir(exist_ok=True)
 
 # ---- FFprobe để lấy duration audio ----
-FFPROBE = r"C:\Users\Khang\Desktop\ffmpeg\ffmpeg-8.1.2-essentials_build\bin\ffprobe.exe"
 
-# Chạy subprocess KHÔNG nháy cửa sổ console (server chạy pythonw — không có console,
+def _find_ffprobe() -> str:
+    """Thứ tự: env FFPROBE -> cạnh ffmpeg pipeline -> runtime/ffmpeg portable -> PATH -> mặc định máy LO."""
+    env = os.environ.get("FFPROBE", "")
+    if env and Path(env).is_file():
+        return env
+    if tts.FFMPEG:
+        cand = Path(tts.FFMPEG).parent / "ffprobe.exe"
+        if cand.is_file():
+            return str(cand)
+    local = Path(__file__).resolve().parent / "runtime" / "ffmpeg" / "ffprobe.exe"
+    if local.is_file():
+        return str(local)
+    which = shutil.which("ffprobe")
+    if which:
+        return which
+    return r"C:\Users\Khang\Desktop\ffmpeg\ffmpeg-8.1.2-essentials_build\bin\ffprobe.exe"
+
+
+FFPROBE = _find_ffprobe()
 # Windows sẽ tự tạo cửa sổ mới cho ffmpeg/ffprobe nếu không gắn cờ này)
 NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
 
@@ -852,10 +879,12 @@ if __name__ == "__main__":
     import threading as _th
     import webbrowser as _wb
 
+    PORT = int(os.environ.get("TTSTUD_PORT", "5000"))
+
     def _open_browser():
         import time as _t
         _t.sleep(1.5)
-        _wb.open("http://127.0.0.1:5000/")
+        _wb.open(f"http://127.0.0.1:{PORT}/")
 
     _th.Thread(target=_open_browser, daemon=True).start()
-    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)
+    app.run(host="127.0.0.1", port=PORT, debug=False, threaded=True)
