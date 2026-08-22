@@ -1064,6 +1064,27 @@ def serve_dubbing(name):
     return send_from_directory(str(DUB_DIR), name)
 
 
+@app.route("/api/open-folder", methods=["POST"])
+def api_open_folder():
+    data = request.get_json(force=True, silent=True) or {}
+    kind = (data.get("kind") or "").strip()
+    mapping = {"product": PRODUCT_DIR, "video": VIDEO_DIR, "dubbing": DUB_DIR}
+    target = mapping.get(kind)
+    if not target:
+        return jsonify({"error": "kind không hợp lệ"}), 400
+    target.mkdir(parents=True, exist_ok=True)
+    try:
+        if os.name == "nt":
+            os.startfile(str(target))  # type: ignore[attr-defined]
+        else:
+            subprocess.Popen(["xdg-open", str(target)])
+        return jsonify({"ok": True, "path": str(target)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
 if __name__ == "__main__":
     import threading as _th
     import webbrowser as _wb

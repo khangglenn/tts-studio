@@ -424,6 +424,7 @@ textarea::placeholder{color:#5a6172;}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
       <h1 style="font-size:17px;font-weight:700;">Danh sách sản phẩm audio</h1>
       <div style="display:flex;gap:8px;">
+        <button class="btn-save" onclick="openFolder('product')" style="margin-left:0;padding:6px 12px;font-size:12px;">📂 Mở thư mục</button>
         <button class="btn-save" id="btnToggleSelect" style="margin-left:0;padding:6px 12px;font-size:12px;">Chọn để ghép</button>
         <button class="btn-save" id="btnRefreshHistory" style="margin-left:0;padding:6px 12px;font-size:12px;">Làm mới</button>
       </div>
@@ -453,12 +454,12 @@ textarea::placeholder{color:#5a6172;}
     <div id="lwList"></div>
   </div>
 
-  <!-- ---------- VIEW VIDEO ---------- -->
   <div class="view" id="view-video">
-    <h1 style="font-size:17px;font-weight:700;margin-bottom:6px;">Tạo video từ ảnh + audio</h1>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">
-      Chọn ảnh → click vào ảnh ghi chữ → chọn audio → tạo video.
-    </p>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <h1 style="font-size:17px;font-weight:700;">Tạo video từ ảnh + audio</h1>
+      <button class="btn-save" onclick="openFolder('video')" style="margin-left:0;padding:6px 12px;font-size:12px;">📂 Mở thư mục</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Chọn ảnh → click vào ảnh ghi chữ → chọn audio → tạo video.</p>
 
     <div style="display:flex;gap:20px;flex-wrap:wrap;">
       <!-- Cột trái: upload ảnh + preview + text -->
@@ -569,10 +570,12 @@ textarea::placeholder{color:#5a6172;}
       <div id="vidList"></div>
     </div>
   </div>
-
   <!-- ---------- VIEW DUBBING ---------- -->
   <div class="view" id="view-dubbing">
-    <h1 style="font-size:17px;font-weight:700;margin-bottom:6px;">Lồng tiếng từ phụ đề SRT</h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <h1 style="font-size:17px;font-weight:700;">Lồng tiếng từ phụ đề SRT</h1>
+      <button class="btn-save" onclick="openFolder('dubbing')" style="margin-left:0;padding:6px 12px;font-size:12px;">📂 Mở thư mục</button>
+    </div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
       Dán nội dung .srt (hoặc tải file) → sửa từng câu → render audio đúng theo mốc thời gian.<br>
       Output: <b>cue_XXXX.mp3</b> từng câu + <b>full.mp3</b> ghép sẵn + <b>timeline.json</b> — dùng trực tiếp cho Remotion (<code>start × 30 = frame</code>).
@@ -1701,6 +1704,12 @@ function dubPoll(id) {
       $('dubResult').style.display = 'block';
     }
   }).catch(() => {});
+}
+function openFolder(kind) {
+  fetch('/api/open-folder', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({kind})})
+    .then(r => r.json()).then(d => {
+      if (d.error) alert('Không mở được: ' + d.error);
+    }).catch(e => alert('Lỗi: ' + e));
 }
 restoreState();
 </script>
