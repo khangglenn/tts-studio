@@ -256,6 +256,14 @@ def render_job(rid: str, text: str, settings: dict):
             _rendering = False
 
 
+@app.after_request
+def _no_cache_html(resp):
+    """Tránh browser cache trang cũ sau khi update UI."""
+    if resp.content_type and resp.content_type.startswith("text/html"):
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return resp
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -873,6 +881,187 @@ def api_video_delete(name):
         p.unlink()
         return jsonify({"ok": True})
     return jsonify({"error": "Không tìm thấy"}), 404
+
+
+
+# ================= DUBBING (SRT -> giọng đọc đồng bộ) =================
+DUB_DIR = BASE_DIR / "dubbing"
+DUB_DIR.mkdir(exist_ok=True)
+DUB_JOBS = {}
+_dub_busy = False
+
+_SRT_TS_RE = re.compile(
+    r"(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)")
+
+
+def parse_srt(text: str) -> list:
+    """Parser SRT thô -> [{i,start,end,text}] (giây float)."""
+    cues = []
+    for b in re.split(r"\r?\n\s*\r?\n", (text or "").strip()):
+        lines = [l.strip() for l in b.splitlines() if l.strip()]
+        if not lines:
+            continue
+        ti = 1 if (len(lines) > 1 and lines[0].isdigit()) else 0
+        m = _SRT_TS_RE.search(lines[ti])
+        if not m:
+            continue
+        g = [int(x) for x in m.groups()]
+        start = g[0] * 3600 + g[1] * 60 + g[2] + g[3] / 1000.0
+        end = g[4] * 3600 + g[5] * 60 + g[6] + g[7] / 1000.0
+        body = " ".join(lines[ti + 1:]).strip()
+        if body:
+            cues.append({"i": len(cues) + 1, "start": round(start, 3),
+                         "end": round(end, 3), "text": body})
+    return cues
+
+
+def _pcm_of_mp3(mp3_path: Path) -> bytes:
+    """Decode mp3/wav -> PCM s16le mono 22050 raw."""
+    r = subprocess.run(
+        [tts.FFMPEG, "-v", "error", "-i", str(mp3_path),
+         "-f", "s16le", "-ar", str(tts.SAMPLE_RATE), "-ac", "1", "-"],
+        capture_output=True, creationflags=NO_WINDOW)
+    return r.stdout or b""
+
+
+def dubbing_job(jid: str, cues: list, settings: dict):
+    global _dub_busy
+    job = DUB_JOBS[jid]
+    try:
+        out_dir = DUB_DIR / jid
+        (out_dir / "cues").mkdir(parents=True, exist_ok=True)
+        speed = float(settings.get("speed", 1.3))
+        eq = settings.get("eq", "none")
+        volume = float(settings.get("volume", 1.0))
+        pitch = float(settings.get("pitch", 0.0))
+        syn = SynthesisConfig(length_scale=1.0 / speed,
+                              noise_scale=float(settings.get("noise_scale", 0.667)),
+                              noise_w_scale=float(settings.get("noise_w", 0.8)))
+        voice = get_voice()
+        chain = build_filter_chain(eq, volume, pitch)
+
+        total = len(cues)
+        job["total"] = total
+        SR = tts.SAMPLE_RATE
+        last_end = max((c["end"] for c in cues), default=0.0)
+        buf = bytearray(int(last_end * SR) * 2 + SR * 2)  # +1s đệm
+        timeline = []
+        ff = tts.FFMPEG
+        if not ff:
+            raise RuntimeError("Không tìm thấy ffmpeg")
+
+        for c in cues:
+            text_proc = tts.vietnamize_text(c["text"])
+            wav = b""
+            if re.search(r"[A-Za-zÀ-ỹ0-9]", text_proc):
+                try:
+                    wav = tts.synth_sentence(voice, syn, text_proc)
+                except Exception:
+                    wav = b""
+            fname = f"cue_{c['i']:04d}.mp3"
+            tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+            tmp.close()
+            tts.write_wav_pcm(wav, tmp.name)
+            ff_args = [ff, "-y", "-i", tmp.name, "-codec:a", "libmp3lame",
+                       "-qscale:a", "2"]
+            if chain:
+                ff_args += ["-af", chain]
+            ff_args += [str(out_dir / "cues" / fname)]
+            r = subprocess.run(ff_args, capture_output=True, text=True,
+                               creationflags=NO_WINDOW)
+            os.unlink(tmp.name)
+            dur_s = round(len(wav) / 2 / SR, 3)
+            # đặt vào timeline tổng (đè chồng nếu trùng — giữ cái sau)
+            off = int(c["start"] * SR) * 2
+            if off + len(wav) <= len(buf):
+                buf[off:off + len(wav)] = wav
+            timeline.append({"i": c["i"], "start": c["start"], "end": c["end"],
+                             "dur": dur_s, "file": f"cues/{fname}",
+                             "chars": len(c["text"]), "text": c["text"]})
+            job["progress"] = c["i"]
+            job["message"] = f"Đã đọc cue {c['i']}/{total}..."
+
+        job["message"] = "Đang ghép track tổng..."
+        full_wav = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        full_wav.close()
+        tts.write_wav_pcm(bytes(buf), full_wav.name)
+        full_name = "full.mp3"
+        subprocess.run(
+            [ff, "-y", "-i", full_wav.name, "-codec:a", "libmp3lame",
+             "-qscale:a", "2",
+             "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+             str(out_dir / full_name)],
+            capture_output=True, text=True, creationflags=NO_WINDOW)
+        os.unlink(full_wav.name)
+
+        meta = {"version": 1, "fps_hint": 30, "sample_rate": SR,
+                "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "full": full_name, "cues": timeline}
+        (out_dir / "timeline.json").write_text(
+            json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
+        job["status"] = "done"
+        job["message"] = f"Hoàn tất {total} cue"
+        job["dir"] = jid
+    except Exception as e:
+        job["status"] = "error"
+        job["error"] = str(e)[:400]
+    finally:
+        _dub_busy = False
+
+
+_dub_lock = threading.Lock()
+
+
+@app.route("/api/dubbing/parse", methods=["POST"])
+def api_dub_parse():
+    data = request.get_json(force=True, silent=True) or {}
+    cues = parse_srt(data.get("srt", ""))
+    return jsonify({"cues": cues, "count": len(cues)})
+
+
+@app.route("/api/dubbing/render", methods=["POST"])
+def api_dub_render():
+    global _dub_busy
+    data = request.get_json(force=True, silent=True) or {}
+    cues = data.get("cues") or []
+    cues = [c for c in cues if (c.get("text") or "").strip()]
+    if not cues:
+        return jsonify({"error": "Chưa có cue nào"}), 400
+    with _dub_lock:
+        if _dub_busy:
+            return jsonify({"error": "Đang có job lồng tiếng chạy"}), 409
+        _dub_busy = True
+    jid = uuid.uuid4().hex[:12]
+    DUB_JOBS[jid] = {"id": jid, "status": "processing", "progress": 0,
+                     "total": len(cues), "message": "Bắt đầu...", "error": None}
+    threading.Thread(target=dubbing_job, args=(jid, cues, data.get("settings") or {}),
+                     daemon=True).start()
+    return jsonify({"id": jid})
+
+
+@app.route("/api/dubbing/status/<jid>")
+def api_dub_status(jid):
+    j = DUB_JOBS.get(jid)
+    return (jsonify(j), 200) if j else (jsonify({"error": "Không tìm thấy"}), 404)
+
+
+@app.route("/api/dubbing/list")
+def api_dub_list():
+    items = []
+    for d in sorted(DUB_DIR.iterdir(), key=lambda p: p.stat().st_mtime,
+                    reverse=True):
+        if d.is_dir() and (d / "timeline.json").exists():
+            items.append({
+                "id": d.name,
+                "mtime": datetime.fromtimestamp(d.stat().st_mtime).strftime("%d/%m/%Y %H:%M"),
+                "url": f"/dubbing/{d.name}/timeline.json",
+            })
+    return jsonify(items)
+
+
+@app.route("/dubbing/<path:name>")
+def serve_dubbing(name):
+    return send_from_directory(str(DUB_DIR), name)
 
 
 if __name__ == "__main__":

@@ -318,6 +318,10 @@ textarea::placeholder{color:#5a6172;}
       <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
       Tạo video
     </div>
+    <div class="nav-item" data-view="dubbing">
+      <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+      Lồng tiếng SRT
+    </div>
     <div class="nav-item" data-view="settings">
       <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.484.484 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
       Cài đặt
@@ -563,6 +567,47 @@ textarea::placeholder{color:#5a6172;}
     <div style="margin-top:24px;">
       <div style="font-weight:600;font-size:13px;margin-bottom:10px;">Video đã tạo</div>
       <div id="vidList"></div>
+    </div>
+  </div>
+
+  <!-- ---------- VIEW DUBBING ---------- -->
+  <div class="view" id="view-dubbing">
+    <h1 style="font-size:17px;font-weight:700;margin-bottom:6px;">Lồng tiếng từ phụ đề SRT</h1>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+      Dán nội dung .srt (hoặc tải file) → sửa từng câu → render audio đúng theo mốc thời gian.<br>
+      Output: <b>cue_XXXX.mp3</b> từng câu + <b>full.mp3</b> ghép sẵn + <b>timeline.json</b> — dùng trực tiếp cho Remotion (<code>start × 30 = frame</code>).
+    </p>
+
+    <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+      <textarea id="dubSrtInput" placeholder="Dán nội dung file .srt vào đây..." style="flex:1;min-width:380px;height:150px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:12px;font-family:monospace;outline:none;"></textarea>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn" onclick="$('dubFilePicker').click()">📂 Tải file .srt</button>
+        <input type="file" id="dubFilePicker" accept=".srt,.txt" style="display:none;">
+        <button class="btn" onclick="dubParse()">🔍 Phân tích SRT</button>
+        <button class="btn" style="background:var(--accent);color:#1a1a00;" onclick="dubRender()">▶ Render lồng tiếng</button>
+      </div>
+    </div>
+    <div id="dubMsg" style="margin-top:8px;font-size:12px;color:var(--muted);"></div>
+
+    <div id="dubCuesWrap" style="display:none;margin-top:14px;">
+      <div style="font-weight:600;font-size:13px;margin-bottom:6px;">Danh sách cue (<span id="dubCount">0</span>) — sửa text ngay trong bảng nếu muốn:</div>
+      <div style="max-height:420px;overflow:auto;border:1px solid var(--border);border-radius:8px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;" id="dubTable">
+          <thead><tr style="position:sticky;top:0;background:var(--card2);text-align:left;">
+            <th style="padding:6px 8px;">#</th><th style="padding:6px 8px;">Bắt đầu</th>
+            <th style="padding:6px 8px;">Kết thúc</th><th style="padding:6px 8px;">Nội dung</th>
+          </tr></thead>
+          <tbody id="dubTbody"></tbody>
+        </table>
+      </div>
+      <div id="dubProgress" style="margin-top:10px;font-size:12px;display:none;">
+        <div style="background:var(--card2);border-radius:6px;height:8px;overflow:hidden;"><div id="dubBar" style="height:100%;width:0%;background:var(--accent);transition:width .3s;"></div></div>
+        <div id="dubStatus" style="margin-top:4px;color:var(--muted);"></div>
+      </div>
+      <div id="dubResult" style="margin-top:10px;display:none;">
+        <div style="font-weight:600;font-size:13px;">Kết quả:</div>
+        <ul id="dubFiles" style="font-size:12px;line-height:1.9;"></ul>
+      </div>
     </div>
   </div>
 
@@ -891,8 +936,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
     else if (v === 'history') { $('view-history').classList.add('active'); loadHistory(); }
     else if (v === 'loanwords') { $('view-loanwords').classList.add('active'); loadLoanwords(); }
     else if (v === 'video') { $('view-video').classList.add('active'); loadVideoList(); loadVideoAudioList(); }
+    else if (v === 'dubbing') { $('view-dubbing').classList.add('active'); }
     else $('view-settings').classList.add('active');
-    const titles = {home:'Chuyển văn bản', history:'Sản phẩm', loanwords:'Kho từ đọc', video:'Tạo video', settings:'Cài đặt'};
+    const titles = {home:'Chuyển văn bản', history:'Sản phẩm', loanwords:'Kho từ đọc', video:'Tạo video', dubbing:'Lồng tiếng SRT', settings:'Cài đặt'};
     document.querySelector('.topbar h1').textContent = titles[v];
   });
 });
@@ -1572,6 +1618,90 @@ function restoreState() {
 window.addEventListener('beforeunload', () => {
   try { localStorage.setItem(LS_KEY, JSON.stringify(collectState())); } catch(e) {}
 });
+// ---------- DUBBING (SRT -> speech) ----------
+$('dubFilePicker').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { $('dubSrtInput').value = rd.result; dubParse(); };
+  rd.readAsText(f, 'utf-8');
+});
+
+function dubParse() {
+  const srt = $('dubSrtInput').value;
+  fetch('/api/dubbing/parse', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({srt})})
+    .then(r => r.json()).then(d => {
+      const cues = d.cues || [];
+      $('dubCount').textContent = cues.length;
+      const tb = $('dubTbody');
+      tb.innerHTML = '';
+      cues.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.style.borderTop = '1px solid var(--border)';
+        tr.innerHTML = `<td style="padding:5px 8px;">${c.i}</td>` +
+          `<td style="padding:5px 8px;white-space:nowrap;font-family:monospace;">${fmtT(c.start)}</td>` +
+          `<td style="padding:5px 8px;white-space:nowrap;font-family:monospace;">${fmtT(c.end)}</td>` +
+          `<td style="padding:4px 8px;"><input data-i="${c.i}" data-s="${c.start}" data-e="${c.end}" value="${c.text.replace(/"/g,'&quot;')}" style="width:98%;background:transparent;border:none;color:var(--text);font-size:12px;outline:none;"></td>`;
+        tb.appendChild(tr);
+      });
+      $('dubCuesWrap').style.display = 'block';
+      $('dubResult').style.display = 'none';
+      $('dubProgress').style.display = 'none';
+      $('dubMsg').textContent = cues.length ? `Đã đọc ${cues.length} cue.` : 'Không tìm thấy cue nào trong SRT.';
+    }).catch(e => { $('dubMsg').textContent = 'Lỗi parse: ' + e; });
+}
+
+function fmtT(s) {
+  s = parseFloat(s) || 0;
+  const m = Math.floor(s / 60), sec = (s - m * 60).toFixed(2).padStart(5, '0');
+  return `${m}:${sec}`;
+}
+
+function dubCollect() {
+  return [...document.querySelectorAll('#dubTbody input')].map((el, idx) => ({
+    i: idx + 1, start: parseFloat(el.dataset.s), end: parseFloat(el.dataset.e),
+    text: el.value.trim()
+  })).filter(c => c.text);
+}
+
+let dubPollTimer = null;
+function dubRender() {
+  const cues = dubCollect();
+  if (!cues.length) { $('dubMsg').textContent = 'Chưa có cue nào để render.'; return; }
+  const settings = {
+    speed: parseFloat($('speedInput').value) || 1.3,
+    volume: parseFloat($('volInput').value) || 1.0,
+    pitch: parseFloat($('pitchInput').value) || 0,
+    eq: $('eqInput').value || 'none'
+  };
+  $('dubMsg').textContent = '';
+  fetch('/api/dubbing/render', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({cues, settings})})
+    .then(r => r.json()).then(d => {
+      if (d.error) { $('dubMsg').textContent = 'Lỗi: ' + d.error; return; }
+      $('dubProgress').style.display = 'block';
+      $('dubResult').style.display = 'none';
+      clearInterval(dubPollTimer);
+      dubPollTimer = setInterval(() => dubPoll(d.id), 1500);
+    }).catch(e => { $('dubMsg').textContent = 'Lỗi: ' + e; });
+}
+
+function dubPoll(id) {
+  fetch('/api/dubbing/status/' + id).then(r => r.json()).then(j => {
+    if (j.total) $('dubBar').style.width = Math.round(100 * (j.progress || 0) / j.total) + '%';
+    $('dubStatus').textContent = j.message || j.error || '';
+    if (j.status === 'done' || j.status === 'error') {
+      clearInterval(dubPollTimer);
+      if (j.status === 'error') { $('dubStatus').textContent = 'LỖI: ' + j.error; return; }
+      const base = '/dubbing/' + id + '/';
+      $('dubFiles').innerHTML =
+        `<li><a href="${base}full.mp3" download>full.mp3</a> — track ghép theo mốc thời gian</li>` +
+        `<li><a href="${base}timeline.json" download>timeline.json</a> — cho Remotion (start × 30 = frame)</li>` +
+        `<li>${j.total} file cue_XXXX.mp3 trong app/dubbing/${id}/cues/</li>`;
+      $('dubResult').style.display = 'block';
+    }
+  }).catch(() => {});
+}
 restoreState();
 </script>
 </body>
