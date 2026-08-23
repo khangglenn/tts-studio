@@ -682,11 +682,32 @@ def api_video_preview_frame():
     filters = []
     if brightness != 100:
         filters.append(f"eq=brightness={(brightness - 100) / 100}")
-    if text:
+    # Hỗ trợ nhiều textbox (texts: [{text,x,y,color,size}]) — fallback single text
+    texts = data.get("texts")
+    txt_files = []
+    if isinstance(texts, list) and texts:
+        for it in texts:
+            tt = (it.get("text") or "").strip()
+            if not tt: continue
+            col = it.get("color") or text_color
+            sz = int(it.get("size") or text_size)
+            xp = float(it.get("x") or 50)
+            yp = float(it.get("y") or 50)
+            tn = f"_overlay_{uuid.uuid4().hex[:8]}.txt"
+            tf = BASE_DIR / tn
+            tf.write_text(tt, encoding="utf-8")
+            txt_files.append(tf)
+            filters.append(f"drawtext=textfile={tn}:fontcolor={col}:fontsize={sz}:x=w*{xp}/100-text_w/2:y=h*{yp}/100-text_h/2:expansion=none")
+    elif text:
         txt_name = f"_overlay_{uuid.uuid4().hex[:8]}.txt"
         txt_file = BASE_DIR / txt_name
         txt_file.write_text(text, encoding="utf-8")
+        txt_files.append(txt_file)
         filters.append(f"drawtext=textfile={txt_name}:fontcolor={text_color}:fontsize={text_size}:x=(w-text_w)/2:y=h*{text_y}/100-text_h/2:expansion=none")
+        txt_file = None  # đã thêm vào txt_files, tránh double free
+    # gán txt_file cho cleanup cũ (giữ compat)
+    if txt_files:
+        txt_file = txt_files[0]
     vf = ",".join(filters) if filters else "null"
 
     cmd = [
@@ -716,8 +737,12 @@ def api_video_preview_frame():
         return jsonify({"error": str(e)}), 500
     finally:
         tmp_out.unlink(missing_ok=True)
-        if txt_file:
-            txt_file.unlink(missing_ok=True)
+        for _tf in locals().get('txt_files', []):
+            try: _tf.unlink(missing_ok=True)
+            except: pass
+        if 'txt_file' in locals() and txt_file:
+            try: txt_file.unlink(missing_ok=True)
+            except: pass
 
 
 @app.route("/api/video/create", methods=["POST"])
@@ -785,14 +810,31 @@ def api_video_create():
     filters = []
     if brightness != 100:
         filters.append(f"eq=brightness={(brightness - 100) / 100}")
-    if text:
+    texts = data.get("texts")
+    txt_files = []
+    if isinstance(texts, list) and texts:
+        for it in texts:
+            tt = (it.get("text") or "").strip()
+            if not tt: continue
+            col = it.get("color") or text_color
+            sz = int(it.get("size") or text_size)
+            xp = float(it.get("x") or 50)
+            yp = float(it.get("y") or 50)
+            tn = f"_overlay_{uuid.uuid4().hex[:8]}.txt"
+            tf = BASE_DIR / tn
+            tf.write_text(tt, encoding="utf-8")
+            txt_files.append(tf)
+            filters.append(f"drawtext=textfile={tn}:fontcolor={col}:fontsize={sz}:x=w*{xp}/100-text_w/2:y=h*{yp}/100-text_h/2:expansion=none")
+    elif text:
         txt_name = f"_overlay_{uuid.uuid4().hex[:8]}.txt"
         txt_file = BASE_DIR / txt_name
         txt_file.write_text(text, encoding="utf-8")
+        txt_files.append(txt_file)
         filters.append(
             f"drawtext=textfile={txt_name}:fontcolor={text_color}:fontsize={text_size}"
             f":x=(w-text_w)/2:y=h*{text_y}/100-text_h/2:expansion=none"
         )
+        txt_file = None
 
     # format=rgba trước scale/pad: ảnh PNG trong suốt không bị pad ăn sai màu (bài học _make_video.py)
     vf_parts = [f"format=rgba,scale={vw}:{vh}:force_original_aspect_ratio=decrease,pad={vw}:{vh}:(ow-iw)/2:(oh-ih)/2,fps={fps}"]
@@ -850,8 +892,11 @@ def api_video_create():
             VIDEO_RENDERS[vid]["status"] = "error"
             VIDEO_RENDERS[vid]["error"] = str(e)
         finally:
-            if txt_file:
-                txt_file.unlink(missing_ok=True)
+            for _tf in locals().get('txt_files', []) + ([txt_file] if 'txt_file' in locals() and txt_file else []):
+                try:
+                    _tf.unlink(missing_ok=True)
+                except:
+                    pass
 
     threading.Thread(target=_run_ffmpeg_thread, daemon=True).start()
     return jsonify({"id": vid})

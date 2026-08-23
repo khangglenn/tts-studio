@@ -450,6 +450,7 @@ textarea::placeholder{color:#5a6172;}
           <img id="vidImgEl" style="width:100%;display:block;">
           <input type="text" id="vidOverlayText" placeholder="Ghi chữ..." style="display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.32);color:#fff;border:2px dashed #fff;outline:1px dashed #000;outline-offset:-3px;border-radius:0;padding:6px 14px;font-size:22px;font-weight:700;text-align:center;min-width:120px;z-index:10;cursor:move;">
           <div id="vidResizeHandle" style="display:none;position:absolute;width:12px;height:12px;background:#fff;border:1px solid #000;cursor:nwse-resize;z-index:11;box-shadow:0 0 2px rgba(0,0,0,0.6);"></div>
+          <div id="vidSelectRect" style="display:none;position:absolute;border:1px dashed #fff;outline:1px dashed #000;background:rgba(255,255,255,0.08);pointer-events:none;z-index:8;"></div>
         </div>
       </div>
       <!-- Cột phải: cài đặt + render -->
@@ -463,13 +464,17 @@ textarea::placeholder{color:#5a6172;}
         </div>
         <!-- Text settings -->
         <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;" id="vidTextSettings" style="display:none;">
-          <div style="font-weight:600;font-size:13px;">Chữ trên ảnh</div>
+          <div style="font-weight:600;font-size:13px;">Chữ trên ảnh <span style="font-weight:400;color:var(--muted);font-size:11px;">— kéo như Snipping để tạo box</span></div>
           <div style="display:flex;gap:8px;align-items:center;">
             <label style="font-size:12px;color:var(--muted);">Màu:</label>
             <input type="color" id="vidTextColor" value="#FFFFFF" style="width:30px;height:26px;border:none;background:none;cursor:pointer;">
             <label style="font-size:12px;color:var(--muted);margin-left:8px;">Cỡ:</label>
             <input type="range" id="vidTextSize" min="20" max="120" value="40" style="flex:1;">
             <span id="vidTextSizeVal" style="font-size:12px;color:var(--muted);width:26px;">40</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="btn" style="flex:1;padding:6px;font-size:12px;" onclick="deleteActiveVidText()">🗑 Xóa box đang chọn</button>
+            <button class="btn" style="flex:1;padding:6px;font-size:12px;" onclick="clearAllVidTexts()">✕ Xóa hết</button>
           </div>
         </div>
         <!-- Video Quality Settings -->
@@ -1327,18 +1332,151 @@ $('vidDropZone').addEventListener('drop', e => {
     $('vidImgPicker').dispatchEvent(new Event('change'));
   }
 });
-// Click vào ảnh → spawn textbox ở vị trí click
-$('vidCanvas').addEventListener('click', e => {
-  if (e.target === $('vidOverlayText')) return;
+// --- Multi textbox Paint-style ---
+let vidTextItems = [];
+let vidActiveId = null;
+function _commitCurrentText() {
+  const inp = $('vidOverlayText');
+  const val = inp.value.trim();
+  const isEditing = !!vidActiveId;
+  // Paint: empty box -> disappear; if editing existing and cleared -> delete it
+  if (!val) {
+    if (isEditing) {
+      vidTextItems = vidTextItems.filter(x=>x.id!==vidActiveId);
+      renderVidTextItems();
+    }
+    inp.value=''; inp.style.display='none'; const h=$('vidResizeHandle'); if(h) h.style.display='none'; vidActiveId=null;
+    if (typeof saveState==='function') saveState();
+    return false;
+  }
+  const xPct = (parseFloat(inp.style.left) / $('vidCanvas').offsetWidth * 100) || 50;
+  const yPct = (parseFloat(inp.style.top) / $('vidCanvas').offsetHeight * 100) || 50;
+  if (vidActiveId) {
+    const it = vidTextItems.find(x=>x.id===vidActiveId);
+    if (it) { it.text=val; it.color=$('vidTextColor').value; it.size=parseInt($('vidTextSize').value); it.x=xPct; it.y=yPct; }
+  } else {
+    const id = Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    vidTextItems.push({id, text:val, x:xPct, y:yPct, color:$('vidTextColor').value, size:parseInt($('vidTextSize').value)});
+  }
+  renderVidTextItems();
+  inp.value=''; inp.style.display='none'; const h=$('vidResizeHandle'); if(h) h.style.display='none'; vidActiveId=null;
+  if (typeof saveState==='function') saveState();
+  return true;
+}
+function renderVidTextItems() {
+  document.querySelectorAll('.vidTextItem').forEach(el=>el.remove());
+  vidTextItems.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='vidTextItem';
+    d.dataset.id=it.id;
+    d.textContent=it.text;
+    d.style.position='absolute';
+    d.style.left=it.x+'%';
+    d.style.top=it.y+'%';
+    d.style.transform='translate(-50%,-50%)';
+    d.style.color=it.color;
+    d.style.fontSize=it.size+'px';
+    d.style.fontWeight='700';
+    d.style.padding='6px 14px';
+    d.style.border='2px dashed rgba(255,255,255,0.85)';
+    d.style.background='rgba(0,0,0,0.32)';
+    d.style.cursor='move';
+    d.style.userSelect='none';
+    d.style.whiteSpace='nowrap';
+    d.style.zIndex='9';
+    d.addEventListener('click', e=>{ e.stopPropagation(); editVidTextItem(it.id); });
+    d.addEventListener('dblclick', e=>{ e.stopPropagation(); vidTextItems=vidTextItems.filter(x=>x.id!==it.id); renderVidTextItems(); if(typeof saveState==='function') saveState(); });
+    $('vidCanvas').appendChild(d);
+  });
+}
+function editVidTextItem(id) {
+  const it=vidTextItems.find(x=>x.id===id);
+  if(!it) return;
+  vidActiveId=id;
+  const inp=$('vidOverlayText');
+  inp.value=it.text;
+  inp.style.left=it.x+'%';
+  inp.style.top=it.y+'%';
+  inp.style.transform='translate(-50%,-50%)';
+  inp.style.display='block';
+  inp.style.color=it.color;
+  inp.style.fontSize=it.size+'px';
+  inp.focus(); inp.select();
+  _updateHandle();
+}
+// Kéo như Snipping để tạo textbox — giữ Paint: trống thì mất
+let _selectDrag = null;
+function deleteActiveVidText(){
+  if (vidActiveId) {
+    vidTextItems = vidTextItems.filter(x=>x.id!==vidActiveId);
+    renderVidTextItems();
+    const inp=$('vidOverlayText'); inp.value=''; inp.style.display='none'; const h=$('vidResizeHandle'); if(h) h.style.display='none'; vidActiveId=null;
+    if(typeof saveState==='function') saveState();
+  } else {
+    const inp=$('vidOverlayText');
+    if (inp.style.display==='block') { inp.value=''; _commitCurrentText(); }
+  }
+}
+function clearAllVidTexts(){
+  if(!vidTextItems.length && $('vidOverlayText').style.display==='none') return;
+  if(!confirm('Xóa hết ' + vidTextItems.length + ' textbox?')) return;
+  vidTextItems=[]; renderVidTextItems();
+  const inp=$('vidOverlayText'); inp.value=''; inp.style.display='none'; const h=$('vidResizeHandle'); if(h) h.style.display='none'; vidActiveId=null;
+  if(typeof saveState==='function') saveState();
+}
+$('vidCanvas').addEventListener('mousedown', e => {
+  if (e.target === $('vidOverlayText') || e.target.id==='vidResizeHandle' || e.target.classList.contains('vidTextItem')) return;
+  const inp=$('vidOverlayText');
+  // nếu đang gõ dở, commit/discard trước
+  if (inp.style.display==='block') {
+    _commitCurrentText();
+    if (inp.style.display==='block') { inp.style.display='none'; const h=$('vidResizeHandle'); if(h) h.style.display='none'; vidActiveId=null; }
+  }
   const box = $('vidCanvas').getBoundingClientRect();
-  const x = e.clientX - box.left;
-  const y = e.clientY - box.top;
-  const input = $('vidOverlayText');
-  input.style.display = 'block';
-  input.style.left = x + 'px';
-  input.style.top = (y - 14) + 'px';
-  input.value = '';
-  input.focus();
+  const sx = e.clientX - box.left;
+  const sy = e.clientY - box.top;
+  _selectDrag = {sx, sy, rect: $('vidSelectRect')};
+  const r = _selectDrag.rect;
+  r.style.display='block'; r.style.left=sx+'px'; r.style.top=sy+'px'; r.style.width='0px'; r.style.height='0px';
+  const onMove = (ev)=>{
+    if (!_selectDrag) return;
+    const x = ev.clientX - box.left, y = ev.clientY - box.top;
+    const left = Math.min(_selectDrag.sx, x), top = Math.min(_selectDrag.sy, y);
+    const w = Math.abs(x - _selectDrag.sx), h = Math.abs(y - _selectDrag.sy);
+    r.style.left = left+'px'; r.style.top = top+'px'; r.style.width = w+'px'; r.style.height = h+'px';
+  };
+  const onUp = (ev)=>{
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    if (!_selectDrag) return;
+    const x = ev.clientX - box.left, y = ev.clientY - box.top;
+    const left = Math.min(_selectDrag.sx, x), top = Math.min(_selectDrag.sy, y);
+    const w = Math.abs(x - _selectDrag.sx), h = Math.abs(y - _selectDrag.sy);
+    r.style.display='none';
+    _selectDrag=null;
+    // nếu kéo quá nhỏ thì coi như click -> tạo box mặc định
+    const useW = w < 20 ? 160 : w;
+    const useH = h < 15 ? 0 : h;
+    const cx = w < 20 ? left : left + w/2;
+    const cy = h < 15 ? top : top + h/2;
+    inp.style.display='block';
+    inp.style.left = cx + 'px';
+    inp.style.top = cy + 'px';
+    inp.style.transform = 'translate(-50%,-50%)';
+    if (useW>20) inp.style.width = useW + 'px';
+    else inp.style.width = '';
+    if (useH>0) inp.style.height = useH + 'px';
+    inp.value=''; vidActiveId=null; inp.focus();
+    _updateHandle();
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+});
+// Fallback click cho trường hợp không kéo (giữ compat)
+$('vidCanvas').addEventListener('click', e => {
+  if (e.target === $('vidOverlayText') || e.target.id==='vidResizeHandle' || e.target.classList.contains('vidTextItem') || e.target.id==='vidSelectRect') return;
+  // nếu vừa kéo xong thì bỏ qua click
+  if (window._justDragged) { window._justDragged=false; return; }
 });
 // --- Paint-style drag & resize ---
 let _drag = null, _resize = null;
@@ -1370,6 +1508,8 @@ function _onDragMove(e) {
 }
 function _onDragEnd() {
   _drag = null;
+  window._justDragged = true;
+  setTimeout(()=>window._justDragged=false, 300);
   document.removeEventListener('mousemove', _onDragMove);
   document.removeEventListener('mouseup', _onDragEnd);
   if (typeof saveState === 'function') saveState();
@@ -1405,11 +1545,24 @@ function _onResizeEnd() {
 $('vidOverlayText').addEventListener('focus', _updateHandle);
 new MutationObserver(_updateHandle).observe($('vidOverlayText'), { attributes:true, attributeFilter:['style'] });
 
-// Enter → confirm text, click ra ngoài → ẩn
+// Enter → commit, Esc → discard (Paint), blur → Paint: trống thì mất
 $('vidOverlayText').addEventListener('blur', () => {
-  if (!$('vidOverlayText').value.trim()) $('vidOverlayText').style.display = 'none';
+  setTimeout(()=>{
+    if (document.activeElement === $('vidOverlayText')) return;
+    const inp=$('vidOverlayText');
+    // nếu đang kéo thì bỏ qua blur
+    if (window._drag || window._resize) return;
+    if (!inp.value.trim() && inp.style.display==='block') {
+      _commitCurrentText();
+      return;
+    }
+    if (inp.value.trim()) _commitCurrentText();
+  },150);
 });
-$('vidOverlayText').addEventListener('keydown', e => { if (e.key === 'Enter') $('vidOverlayText').blur(); });
+$('vidOverlayText').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); $('vidOverlayText').blur(); }
+  if (e.key === 'Escape') { e.preventDefault(); const inp=$('vidOverlayText'); inp.value=''; _commitCurrentText(); }
+});
 $('vidTextSize').addEventListener('input', () => { $('vidTextSizeVal').textContent = $('vidTextSize').value; $('vidOverlayText').style.fontSize = $('vidTextSize').value + 'px'; });
 $('vidTextColor').addEventListener('input', () => { $('vidOverlayText').style.color = $('vidTextColor').value; });
 async function loadVideoAudioList() {
@@ -1454,8 +1607,11 @@ async function delVideo(name) {
 $('btnVidRender').addEventListener('click', async () => {
   if (!vidImageURL) { alert('Chọn ảnh nền trước'); return; }
   if (!$('vidAudioSelect').value) { alert('Chọn audio trước'); return; }
-  const input = $('vidOverlayText');
-  const hasText = input.style.display === 'block' && input.value.trim();
+  // commit text đang gõ nếu có
+  const inp2=$('vidOverlayText');
+  if (inp2.style.display==='block' && inp2.value.trim()) _commitCurrentText();
+  const texts = vidTextItems.map(it=>({text:it.text, x:it.x, y:it.y, color:it.color, size:it.size}));
+  const first = texts[0];
   const btn = $('btnVidRender');
   btn.disabled = true; btn.textContent = 'Đang render...';
   $('vidProgress').style.display = '';
@@ -1467,10 +1623,11 @@ $('btnVidRender').addEventListener('click', async () => {
       body: JSON.stringify({
         image_url: vidImageURL,
         audio_url: $('vidAudioSelect').value,
-        text: hasText ? input.value.trim() : '',
-        text_color: $('vidTextColor').value,
-        text_size: parseInt($('vidTextSize').value),
-        text_y: hasText ? Math.round(parseInt(input.style.top) / $('vidCanvas').offsetHeight * 100) : 85,
+        texts: texts,
+        text: first ? first.text : '',
+        text_color: first ? first.color : $('vidTextColor').value,
+        text_size: first ? first.size : parseInt($('vidTextSize').value),
+        text_y: first ? Math.round(first.y) : 85,
         output_name: $('vidOutputName').value.trim(),
         quality: $('vidQuality').value,
         fps: parseInt($('vidFps').value),
@@ -1515,6 +1672,7 @@ function collectState() {
     settings: { speed: $('setSpeed').value, vol: $('setVol').value, pitch: $('setPitch').value, eq: $('setEq').value, pause: $('setPause').value, pauseComma: $('setPauseComma').value },
     video: {
       img: vidImageURL,
+      vidTextItems: typeof vidTextItems !== 'undefined' ? vidTextItems : [],
       text: $('vidOverlayText').value,
       textShown: $('vidOverlayText').style.display === 'block',
       textLeft: $('vidOverlayText').style.left,
@@ -1578,6 +1736,7 @@ function restoreState() {
     if (v.preset) $('vidPreset').value = v.preset;
     if (v.outName) $('vidOutputName').value = v.outName;
     if (v.audio) loadVideoAudioList().then(() => { $('vidAudioSelect').value = v.audio; });
+    if (v.vidTextItems && Array.isArray(v.vidTextItems)) { vidTextItems = v.vidTextItems; setTimeout(()=>{ try{renderVidTextItems();}catch(e){} },300); }
   }
   if (s.view && s.view !== 'home') {
     const item = document.querySelector(`.nav-item[data-view="${s.view}"]`);
