@@ -16,7 +16,6 @@ body{
   font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
   display:flex; height:100vh; overflow:hidden;
 }
-
 /* ---------- SIDEBAR ---------- */
 .sidebar{
   width:230px; background:var(--bg2); border-right:1px solid var(--border);
@@ -31,7 +30,6 @@ body{
 .brand .name{font-size:15px;font-weight:700;}
 .brand .sub{font-size:11px;color:var(--muted);}
 .brand .sub b{color:var(--accent);}
-
 .nav{flex:1;padding:12px 8px;overflow-y:auto;}
 .nav-item{
   display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;
@@ -41,7 +39,6 @@ body{
 .nav-item.active{background:var(--card2);color:var(--accent);font-weight:600;}
 .nav-item svg{width:19px;height:19px;fill:currentColor;flex-shrink:0;}
 .nav-item .tag{font-size:10px;background:var(--danger);color:#fff;border-radius:6px;padding:1px 6px;margin-left:auto;}
-
 .userinfo{
   display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid var(--border);
 }
@@ -51,7 +48,6 @@ body{
 }
 .userinfo .un{font-size:13px;font-weight:600;}
 .userinfo .ue{font-size:11px;color:var(--muted);}
-
 /* ---------- MAIN ---------- */
 .main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;}
 .topbar{
@@ -61,7 +57,6 @@ body{
 .topbar h1{font-size:17px;font-weight:700;}
 .topbar .status-pill{font-size:12px;color:var(--muted);}
 .topbar .status-pill .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;}
-
 .content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .textarea-wrap{flex:1;padding:22px 26px 8px;display:flex;flex-direction:column;min-height:0;}
 textarea{
@@ -72,7 +67,6 @@ textarea{
 textarea:focus{outline:none;border-color:var(--accent);}
 textarea::placeholder{color:#5a6172;}
 .char-count{text-align:right;font-size:12px;color:var(--muted);padding:5px 6px 0 0;}
-
 /* ---------- SETTINGS BAR ---------- */
 .settings{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:8px 26px 0;}
 .setting{display:flex;align-items:center;gap:8px;}
@@ -108,7 +102,6 @@ textarea::placeholder{color:#5a6172;}
 .scan-item .btn-add-one{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
 .scan-item .btn-add-one:hover{border-color:var(--accent);color:var(--accent);}
 .scan-item .added{font-size:12px;color:var(--green);white-space:nowrap;}
-
 /* ---------- GENERATE BAR ---------- */
 .genbar{display:flex;align-items:center;gap:16px;padding:14px 26px;}
 .btn-gen{
@@ -123,7 +116,6 @@ textarea::placeholder{color:#5a6172;}
 .progress-info{font-size:13px;color:var(--muted);}
 .progress-bar{height:6px;background:var(--card2);border-radius:4px;overflow:hidden;width:220px;}
 .progress-bar .fill{height:100%;width:0%;background:var(--accent);transition:width .3s;}
-
 /* ---------- PLAYER ---------- */
 .player{
   flex-shrink:0;
@@ -156,7 +148,6 @@ textarea::placeholder{color:#5a6172;}
 }
 .btn-dl:hover{border-color:var(--accent);color:var(--accent);}
 .btn-dl svg{width:16px;height:16px;fill:currentColor;}
-
 /* ---------- HISTORY ---------- */
 .view{display:none;flex:1;overflow-y:auto;padding:22px 26px 90px;min-height:0;}
 .view.active{display:block;}
@@ -181,7 +172,6 @@ textarea::placeholder{color:#5a6172;}
 .lw-item .btn-lw.del:hover{border-color:var(--danger);color:var(--danger);}
 .lw-item .saved{font-size:11px;color:var(--green);white-space:nowrap;}
 .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:14px;}
-
 /* ---------- MERGE ---------- */
 .merge-bar{
   display:none;align-items:center;gap:12px;padding:14px 18px;
@@ -200,7 +190,6 @@ textarea::placeholder{color:#5a6172;}
 .btn-cancel-merge{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;}
 .btn-cancel-merge:hover{border-color:var(--muted);}
 .hist-cb{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
-
 /* settings view */
 .setting-row{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:14px 18px;margin-bottom:10px;min-height:68px;box-sizing:border-box;}
 .setting-row .lbl{font-size:14px;}
@@ -208,7 +197,6 @@ textarea::placeholder{color:#5a6172;}
 .setting-row input[type=number]{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;width:90px;outline:none;}
 .setting-row select{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;outline:none;}
 .setting-row .value{font-size:13px;color:var(--muted);}
-
 /* ---------- MODAL UPLOAD (VBEE STYLE) ---------- */
 .modal-overlay{
   position:fixed;top:0;left:0;right:0;bottom:0;
@@ -276,7 +264,6 @@ textarea::placeholder{color:#5a6172;}
 }
 .btn-primary:hover{filter:brightness(1.08);}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
-
 /* Toast */
 .toast{
   position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
@@ -288,7 +275,6 @@ textarea::placeholder{color:#5a6172;}
 </style>
 </head>
 <body>
-
 <!-- ================= SIDEBAR ================= -->
 <aside class="sidebar">
   <div class="brand">
@@ -300,7 +286,6 @@ textarea::placeholder{color:#5a6172;}
       <div class="sub">by <b>Lo</b> ai</div>
     </div>
   </div>
-
   <nav class="nav">
     <div class="nav-item active" data-view="home">
       <svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -328,7 +313,6 @@ textarea::placeholder{color:#5a6172;}
       Cài đặt
     </div>
   </nav>
-
   <div class="userinfo" style="display:none;">
     <div class="avatar">K</div>
     <div>
@@ -337,14 +321,12 @@ textarea::placeholder{color:#5a6172;}
     </div>
   </div>
 </aside>
-
 <!-- ================= MAIN ================= -->
 <main class="main">
   <div class="topbar">
     <h1>Chuyển văn bản</h1>
     <div class="status-pill"><span class="dot"></span>Giọng: Ngọc Huyền (Piper)</div>
   </div>
-
   <!-- ---------- VIEW HOME ---------- -->
   <div class="content view active" id="view-home">
     <div class="textarea-wrap">
@@ -360,7 +342,6 @@ textarea::placeholder{color:#5a6172;}
       </div>
       <textarea id="textInput" placeholder="Nhập, dán văn bản hoặc kéo thả tệp (.txt, .md, .docx, .pdf, .srt...) vào đây..."></textarea>
     </div>
-
     <div class="settings">
       <div class="setting">
         <label>Tốc độ đọc</label>
@@ -392,7 +373,6 @@ textarea::placeholder{color:#5a6172;}
         </select>
       </div>
     </div>
-
     <div class="genbar">
       <button class="btn-gen" id="btnGen">
         <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -419,7 +399,6 @@ textarea::placeholder{color:#5a6172;}
       </div>
     </div>
   </div>
-
   <!-- ---------- VIEW HISTORY (SẢN PHẨM) ---------- -->
   <div class="view" id="view-history">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -441,7 +420,6 @@ textarea::placeholder{color:#5a6172;}
     </div>
     <div id="histList" style="padding-right:12px;"></div>
   </div>
-
   <!-- ---------- VIEW LOANWORDS ---------- -->
   <div class="view" id="view-loanwords">
     <h1 style="font-size:17px;font-weight:700;margin-bottom:6px;">Kho từ đọc Việt hóa</h1>
@@ -454,14 +432,12 @@ textarea::placeholder{color:#5a6172;}
     </div>
     <div id="lwList"></div>
   </div>
-
   <div class="view" id="view-video">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
       <h1 style="font-size:17px;font-weight:700;">Tạo video từ ảnh + audio</h1>
       <button class="btn-save" onclick="openFolder('video')" style="margin-left:0;padding:6px 12px;font-size:12px;">📂 Mở thư mục</button>
     </div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Chọn ảnh → click vào ảnh ghi chữ → chọn audio → tạo video.</p>
-
     <div style="display:flex;gap:20px;flex-wrap:wrap;">
       <!-- Cột trái: upload ảnh + preview + text -->
       <div style="flex:2;min-width:400px;">
@@ -470,14 +446,12 @@ textarea::placeholder{color:#5a6172;}
           <div style="font-size:13px;color:var(--muted);">Kéo thả ảnh hoặc nhấn chọn file (JPG, PNG, WEBP)</div>
         </div>
         <input type="file" id="vidImgPicker" accept="image/*" style="display:none;">
-
-        <!-- Preview ảnh + textbox overlay -->
-        <div id="vidCanvas" style="display:none;position:relative;margin-top:12px;border-radius:10px;overflow:hidden;border:1px solid var(--border);cursor:crosshair;" title="Click vào ảnh để ghi chữ">
+        <div id="vidCanvas" style="display:none;position:relative;margin-top:12px;border-radius:0;overflow:hidden;border:1px solid var(--border);cursor:crosshair;" title="Click vào ảnh để ghi chữ — kéo để di chuyển, kéo góc để resize">
           <img id="vidImgEl" style="width:100%;display:block;">
-          <input type="text" id="vidOverlayText" placeholder="Ghi chữ..." style="display:none;position:absolute;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:22px;font-weight:700;text-align:center;outline:none;min-width:120px;z-index:10;">
+          <input type="text" id="vidOverlayText" placeholder="Ghi chữ..." style="display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.32);color:#fff;border:2px dashed #fff;outline:1px dashed #000;outline-offset:-3px;border-radius:0;padding:6px 14px;font-size:22px;font-weight:700;text-align:center;min-width:120px;z-index:10;cursor:move;">
+          <div id="vidResizeHandle" style="display:none;position:absolute;width:12px;height:12px;background:#fff;border:1px solid #000;cursor:nwse-resize;z-index:11;box-shadow:0 0 2px rgba(0,0,0,0.6);"></div>
         </div>
       </div>
-
       <!-- Cột phải: cài đặt + render -->
       <div style="flex:1;min-width:260px;">
         <!-- Chọn audio -->
@@ -487,7 +461,6 @@ textarea::placeholder{color:#5a6172;}
             <option value="">-- Chọn từ Sản phẩm --</option>
           </select>
         </div>
-
         <!-- Text settings -->
         <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;" id="vidTextSettings" style="display:none;">
           <div style="font-weight:600;font-size:13px;">Chữ trên ảnh</div>
@@ -499,13 +472,6 @@ textarea::placeholder{color:#5a6172;}
             <span id="vidTextSizeVal" style="font-size:12px;color:var(--muted);width:26px;">40</span>
           </div>
         </div>
-
-        <!-- Brightness -->
-        <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;" id="vidBrightSettings" style="display:none;">
-          <div style="font-weight:600;font-size:13px;">Độ sáng</div>
-          <input type="range" id="vidBrightness" min="30" max="170" value="100" style="width:100%;">
-        </div>
-
         <!-- Video Quality Settings -->
         <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;">
           <div style="font-weight:600;font-size:13px;">Chất lượng video</div>
@@ -548,12 +514,10 @@ textarea::placeholder{color:#5a6172;}
             </div>
           </div>
         </div>
-
         <!-- Output name -->
         <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;">
           <input type="text" id="vidOutputName" placeholder="Tên file (để trống = tự đặt)" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;">
         </div>
-
         <!-- Buttons -->
         <button class="btn-gen" id="btnVidRender" style="width:100%;margin-top:12px;background:linear-gradient(135deg,#4caf50,#388e3c);">Tạo video</button>
         <div id="vidProgress" style="display:none;margin-top:10px;">
@@ -564,7 +528,6 @@ textarea::placeholder{color:#5a6172;}
         </div>
       </div>
     </div>
-
     <!-- Danh sách video đã tạo -->
     <div style="margin-top:24px;">
       <div style="font-weight:600;font-size:13px;margin-bottom:10px;">Video đã tạo</div>
@@ -581,7 +544,6 @@ textarea::placeholder{color:#5a6172;}
       Dán nội dung .srt (hoặc tải file) → sửa từng câu → render audio đúng theo mốc thời gian.<br>
       Output: <b>cue_XXXX.mp3</b> từng câu + <b>full.mp3</b> ghép sẵn + <b>timeline.json</b> — dùng trực tiếp cho Remotion (<code>start × 30 = frame</code>).
     </p>
-
     <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
       <textarea id="dubSrtInput" placeholder="Dán nội dung file .srt vào đây..." style="flex:1;min-width:380px;height:150px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:12px;font-family:monospace;outline:none;"></textarea>
       <div style="display:flex;flex-direction:column;gap:8px;">
@@ -592,7 +554,6 @@ textarea::placeholder{color:#5a6172;}
       </div>
     </div>
     <div id="dubMsg" style="margin-top:8px;font-size:12px;color:var(--muted);"></div>
-
     <div id="dubCuesWrap" style="display:none;margin-top:14px;">
       <div style="font-weight:600;font-size:13px;margin-bottom:6px;">Danh sách cue (<span id="dubCount">0</span>) — sửa text ngay trong bảng nếu muốn:</div>
       <div style="max-height:420px;overflow:auto;border:1px solid var(--border);border-radius:8px;">
@@ -614,7 +575,6 @@ textarea::placeholder{color:#5a6172;}
       </div>
     </div>
   </div>
-
   <!-- ---------- VIEW SETTINGS ---------- -->
   <div class="view" id="view-settings">
     <h1 style="font-size:17px;font-weight:700;margin-bottom:16px;">Cài đặt TTS</h1>
@@ -698,7 +658,6 @@ textarea::placeholder{color:#5a6172;}
       <button class="btn-gen" id="btnSaveSettings" style="padding:10px 22px;font-size:14px;">Lưu cài đặt</button>
     </div>
   </div>
-
   <!-- ---------- PLAYER ---------- -->
   <div class="player">
     <div class="controls">
@@ -731,7 +690,6 @@ textarea::placeholder{color:#5a6172;}
     </div>
   </div>
 </main>
-
 <!-- ================= MODAL TẢI TỆP LÊN (VBEE STYLE) ================= -->
 <div class="modal-overlay" id="uploadModal">
   <div class="modal-card">
@@ -765,7 +723,6 @@ textarea::placeholder{color:#5a6172;}
         </div>
       </div>
       <input type="file" id="filePicker" accept=".txt,.md,.markdown,.docx,.pdf,.srt,.vtt,.json,.csv,.log,.html" multiple style="display:none;">
-      
       <div class="file-selected-box" id="fileSelectedBox" style="display:none;">
         <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:var(--accent);flex-shrink:0;"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
         <div style="flex:1;min-width:0;">
@@ -781,15 +738,12 @@ textarea::placeholder{color:#5a6172;}
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
-
 <script>
 const $ = id => document.getElementById(id);
 const textInput = $('textInput');
 let currentFile = null;      // url hiện tại đang phát
 let currentName = null;
-
 // Cảnh báo nếu mở thẳng file HTML (file://) — phải chạy qua server
 if (location.protocol === 'file:') {
   document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;width:100vw;background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;">
@@ -806,7 +760,6 @@ if (location.protocol === 'file:') {
   </div>`;
   throw new Error('ABORT');
 }
-
 // Toast thông báo
 function showToast(msg) {
   const t = $('toast');
@@ -814,7 +767,6 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
 }
-
 // Xóa nhanh văn bản
 $('btnClearText').addEventListener('click', () => {
   if (textInput.value && confirm('Xóa toàn bộ nội dung văn bản hiện tại?')) {
@@ -822,10 +774,8 @@ $('btnClearText').addEventListener('click', () => {
     $('charCount').textContent = '0';
   }
 });
-
 // ---------- TẢI TỆP LÊN (UPLOAD MODAL + DRAG DROP) ----------
 let pendingUploadFiles = [];
-
 function openUploadModal() {
   $('uploadModal').classList.add('active');
   resetUploadModal();
@@ -842,22 +792,18 @@ function resetUploadModal() {
   $('btnConfirmUpload').textContent = 'Tiếp tục';
   $('modalDropZone').classList.remove('dragover');
 }
-
 $('btnOpenUpload').addEventListener('click', openUploadModal);
 $('btnCloseUploadModal').addEventListener('click', closeUploadModal);
 $('btnCancelUpload').addEventListener('click', closeUploadModal);
 $('uploadModal').addEventListener('click', e => { if (e.target === $('uploadModal')) closeUploadModal(); });
-
 $('btnChooseFile').addEventListener('click', e => { e.stopPropagation(); $('filePicker').click(); });
 $('modalDropZone').addEventListener('click', () => $('filePicker').click());
-
 $('filePicker').addEventListener('change', e => {
   if (e.target.files && e.target.files.length) {
     pendingUploadFiles = Array.from(e.target.files);
     showSelectedFiles();
   }
 });
-
 function showSelectedFiles() {
   if (!pendingUploadFiles.length) {
     $('fileSelectedBox').style.display = 'none';
@@ -872,12 +818,10 @@ function showSelectedFiles() {
   $('fileSelectedBox').style.display = 'flex';
   $('btnConfirmUpload').disabled = false;
 }
-
 $('btnClearSelectedFile').addEventListener('click', e => {
   e.stopPropagation();
   resetUploadModal();
 });
-
 // Drag & Drop trên Modal
 $('modalDropZone').addEventListener('dragover', e => { e.preventDefault(); $('modalDropZone').classList.add('dragover'); });
 $('modalDropZone').addEventListener('dragleave', () => $('modalDropZone').classList.remove('dragover'));
@@ -889,7 +833,6 @@ $('modalDropZone').addEventListener('drop', e => {
     showSelectedFiles();
   }
 });
-
 // Kéo thả trực tiếp vào Textarea
 textInput.addEventListener('dragover', e => { e.preventDefault(); textInput.style.borderColor = 'var(--accent)'; });
 textInput.addEventListener('dragleave', () => { textInput.style.borderColor = ''; });
@@ -900,19 +843,16 @@ textInput.addEventListener('drop', e => {
     uploadAndExtractFiles(Array.from(e.dataTransfer.files));
   }
 });
-
 // Xác nhận tải tệp lên từ modal
 $('btnConfirmUpload').addEventListener('click', async () => {
   if (!pendingUploadFiles.length) return;
   await uploadAndExtractFiles(pendingUploadFiles);
   closeUploadModal();
 });
-
 async function uploadAndExtractFiles(files) {
   const btn = $('btnConfirmUpload');
   btn.disabled = true;
   btn.textContent = 'Đang đọc file...';
-
   let allText = '';
   let loadedCount = 0;
   for (const file of files) {
@@ -939,10 +879,8 @@ async function uploadAndExtractFiles(files) {
   btn.disabled = false;
   btn.textContent = 'Tiếp tục';
 }
-
 // đếm ký tự
 textInput.addEventListener('input', () => { $('charCount').textContent = textInput.value.length; });
-
 // ---------- NAV ----------
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
@@ -960,7 +898,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.querySelector('.topbar h1').textContent = titles[v];
   });
 });
-
 // ---------- LOANWORDS ----------
 let lwData = [];
 async function loadLoanwords() {
@@ -1008,7 +945,6 @@ async function delLw(word) {
 }
 $('lwSearch').addEventListener('input', renderLwList);
 $('btnLwRefresh').addEventListener('click', loadLoanwords);
-
 // ---------- RENDER ----------
 let polling = null;
 $('btnGen').addEventListener('click', async () => {
@@ -1040,7 +976,6 @@ $('btnGen').addEventListener('click', async () => {
   if (!res.ok) { setBusy(false); $('progressInfo').textContent = data.error || 'Lỗi'; return; }
   pollStatus(data.id);
 });
-
 async function pollStatus(id) {
   const t = setInterval(async () => {
     try {
@@ -1059,16 +994,13 @@ async function pollStatus(id) {
     } catch(e) { clearInterval(t); setBusy(false); }
   }, 600);
 }
-
 function setBusy(b) {
   $('btnGen').disabled = b;
   $('btnGen').style.opacity = b ? '.55' : '1';
 }
-
 // ---------- SCAN TỪ KHÔNG DẤU / TIẾNG ANH (BẢN NHÁP LƯU Ở SERVER) ----------
 let scanItems = [];
 let scanSaveTimer = null;
-
 // Tự động khôi phục bản nháp khi tải trang
 (async () => {
   try {
@@ -1080,7 +1012,6 @@ let scanSaveTimer = null;
     }
   } catch(e) {}
 })();
-
 // Nút "Quét từ không dấu / Tiếng Anh"
 $('btnScan').addEventListener('click', async () => {
   const text = textInput.value.trim();
@@ -1096,7 +1027,6 @@ $('btnScan').addEventListener('click', async () => {
   } catch(e) { $('scanCount').textContent = 'Lỗi quét'; }
   $('btnScan').disabled = false;
 });
-
 // Render danh sách từ đã quét
 function renderScan() {
   $('scanCount').textContent = scanItems.length ? scanItems.length + ' từ phát hiện' : 'không có từ mới';
@@ -1113,14 +1043,12 @@ function renderScan() {
       <button class="btn-del" onclick="removeScanItem('${it.key}')" title="Bỏ qua từ này">✕</button>
     </div>`).join('');
 }
-
 // Bỏ qua / xóa 1 từ khỏi bảng quét
 function removeScanItem(key) {
   scanItems = scanItems.filter(it => it.key !== key);
   renderScan();
   saveScanDraft();
 }
-
 // Khi sửa cách đọc -> tự động lưu bản nháp sau 600ms
 function onScanEdit(input) {
   const key = input.dataset.key;
@@ -1130,13 +1058,11 @@ function onScanEdit(input) {
   clearTimeout(scanSaveTimer);
   scanSaveTimer = setTimeout(saveScanDraft, 600);
 }
-
 // Lưu bản nháp lên server
 async function saveScanDraft() {
   await fetch('/api/scan/draft', {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({items: scanItems})});
 }
-
 // Thêm 1 từ vào kho
 async function addOne(key) {
   const item = scanItems.find(it => it.key === key);
@@ -1154,7 +1080,6 @@ async function addOne(key) {
     loadLoanwordsSilent();
   }
 }
-
 // Thêm tất cả từ trong bảng quét vào kho
 $('btnAddAll').addEventListener('click', async () => {
   const items = [];
@@ -1178,7 +1103,6 @@ $('btnAddAll').addEventListener('click', async () => {
     alert('Đã thêm ' + data.added + ' từ vào kho từ đọc Piper');
   }
 });
-
 // Xóa toàn bộ bảng quét
 $('btnScanClear').addEventListener('click', async () => {
   if (!scanItems.length) return;
@@ -1187,9 +1111,7 @@ $('btnScanClear').addEventListener('click', async () => {
   scanItems = [];
   renderScan();
 });
-
 function loadLoanwordsSilent() { if ($('view-loanwords').classList.contains('active')) loadLoanwords(); }
-
 // ---------- PLAYER ----------
 const audio = new Audio();
 let lastUrl = null;
@@ -1208,7 +1130,6 @@ $('btnBack').addEventListener('click', () => { audio.currentTime = Math.max(0, a
 $('btnFwd').addEventListener('click', () => { audio.currentTime += 5; });
 $('playSpeed').addEventListener('change', e => { audio.playbackRate = parseFloat(e.target.value); });
 $('volPlayer').addEventListener('input', e => { audio.volume = parseInt(e.target.value) / 100; });
-
 function fmt(sec) {
   sec = Math.floor(sec||0);
   return Math.floor(sec/60) + ':' + String(sec%60).padStart(2,'0');
@@ -1222,12 +1143,10 @@ function loadAudio(url, name) {
   $('trackTime').textContent = '0:00 / 0:00';
   $('progressFill').style.width = '0%';
 }
-
 // ---------- SẢN PHẨM (HISTORY) ----------
 let histData = [];
 let selectMode = false;
 let selectedFiles = new Set();
-
 async function loadHistory() {
   const list = $('histList');
   try {
@@ -1236,7 +1155,6 @@ async function loadHistory() {
     renderHistory();
   } catch(e) { list.innerHTML = '<div class="empty">Lỗi tải danh sách sản phẩm</div>'; }
 }
-
 function renderHistory() {
   const list = $('histList');
   list.innerHTML = histData.map((it, i) => `
@@ -1258,14 +1176,12 @@ function renderHistory() {
       ${!selectMode ? `<button class="btn-del" title="Xóa" onclick="delItem('${it.name}')">✕</button>` : ''}
     </div>`).join('');
 }
-
 function toggleSelectFile(name, checked) {
   if (checked) selectedFiles.add(name);
   else selectedFiles.delete(name);
   $('mergeCount').textContent = selectedFiles.size;
   $('btnMerge').disabled = selectedFiles.size < 2;
 }
-
 $('btnToggleSelect').addEventListener('click', () => {
   selectMode = !selectMode;
   selectedFiles.clear();
@@ -1276,7 +1192,6 @@ $('btnToggleSelect').addEventListener('click', () => {
   $('mergeName').value = '';
   renderHistory();
 });
-
 $('btnCancelMerge').addEventListener('click', () => {
   selectMode = false;
   selectedFiles.clear();
@@ -1284,7 +1199,6 @@ $('btnCancelMerge').addEventListener('click', () => {
   $('mergeBar').classList.remove('show');
   renderHistory();
 });
-
 $('btnMerge').addEventListener('click', async () => {
   if (selectedFiles.size < 2) return;
   const order = histData.filter(it => selectedFiles.has(it.name)).map(it => it.name);
@@ -1313,7 +1227,6 @@ $('btnMerge').addEventListener('click', async () => {
     $('btnMerge').innerHTML = '<svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7V5h10v14zm-4-4h-2v-2h2v2zm0-4h-2V9h2v2z"/></svg> Ghép & lưu';
   }
 });
-
 function startRename(idx) {
   $('hinfo-' + idx).style.display = 'none';
   $('hbtnren-' + idx).style.display = 'none';
@@ -1330,19 +1243,16 @@ function startRename(idx) {
     }
   };
 }
-
 function cancelRename(idx) {
   $('hinfo-' + idx).style.display = '';
   $('hbtnren-' + idx).style.display = '';
   $('hedit-' + idx).style.display = 'none';
 }
-
 async function saveRename(oldName, idx) {
   const newBase = $('hinp-' + idx).value.trim();
   if (!newBase) { alert('Tên file không được để trống'); return; }
   const newName = newBase.toLowerCase().endsWith('.mp3') ? newBase : newBase + '.mp3';
   if (newName === oldName) { cancelRename(idx); return; }
-  
   try {
     const res = await fetch('/api/history/' + encodeURIComponent(oldName) + '/rename', {
       method: 'POST',
@@ -1365,16 +1275,13 @@ async function saveRename(oldName, idx) {
     alert('Không thể kết nối đến máy chủ để đổi tên file');
   }
 }
-
 $('btnRefreshHistory').addEventListener('click', loadHistory);
-
 async function delItem(name) {
   if (!confirm('Xóa file "' + name + '"?')) return;
   await fetch('/api/history/' + encodeURIComponent(name), {method:'DELETE'});
   if (currentName === name) { currentFile=null; currentName=null; audio.src=''; $('trackTitle').textContent='Chưa có audio'; }
   loadHistory();
 }
-
 // ---------- SETTINGS ----------
 $('btnSaveSettings').addEventListener('click', () => {
   $('speedInput').value = $('setSpeed').value;
@@ -1390,10 +1297,8 @@ $('btnSaveSettings').addEventListener('click', () => {
 $('setEq').addEventListener('change', () => { $('eqInput').value = $('setEq').value; });
 $('setVol').addEventListener('change', () => { $('volInput').value = $('setVol').value; });
 $('setPitch').addEventListener('change', () => { $('pitchInput').value = $('setPitch').value; });
-
 // ---------- VIDEO ----------
 let vidImageURL = null;
-
 $('vidImgPicker').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -1407,11 +1312,9 @@ $('vidImgPicker').addEventListener('change', async e => {
       $('vidCanvas').style.display = '';
       $('vidImgEl').src = data.url;
       $('vidTextSettings').style.display = '';
-      $('vidBrightSettings').style.display = '';
     } else { alert(data.error); }
   } catch(err) { alert('Lỗi upload ảnh'); }
 });
-
 $('vidDropZone').addEventListener('dragover', e => { e.preventDefault(); $('vidDropZone').style.borderColor = 'var(--accent)'; });
 $('vidDropZone').addEventListener('dragleave', () => { $('vidDropZone').style.borderColor = ''; });
 $('vidDropZone').addEventListener('drop', e => {
@@ -1424,7 +1327,6 @@ $('vidDropZone').addEventListener('drop', e => {
     $('vidImgPicker').dispatchEvent(new Event('change'));
   }
 });
-
 // Click vào ảnh → spawn textbox ở vị trí click
 $('vidCanvas').addEventListener('click', e => {
   if (e.target === $('vidOverlayText')) return;
@@ -1438,16 +1340,78 @@ $('vidCanvas').addEventListener('click', e => {
   input.value = '';
   input.focus();
 });
+// --- Paint-style drag & resize ---
+let _drag = null, _resize = null;
+function _updateHandle() {
+  const inp = $('vidOverlayText'), h = $('vidResizeHandle');
+  if (!inp || !h) return;
+  if (inp.style.display === 'none' || inp.style.display === '') { h.style.display='none'; return; }
+  h.style.display='block';
+  h.style.left = (inp.offsetLeft + inp.offsetWidth - 6) + 'px';
+  h.style.top = (inp.offsetTop + inp.offsetHeight - 6) + 'px';
+}
+$('vidOverlayText').addEventListener('mousedown', e => {
+  if (e.target.id === 'vidResizeHandle') return;
+  e.preventDefault();
+  const inp = $('vidOverlayText');
+  const startX = e.clientX, startY = e.clientY;
+  const origLeft = inp.offsetLeft, origTop = inp.offsetTop;
+  _drag = { startX, startY, origLeft, origTop };
+  document.addEventListener('mousemove', _onDragMove);
+  document.addEventListener('mouseup', _onDragEnd);
+});
+function _onDragMove(e) {
+  if (!_drag) return;
+  const inp = $('vidOverlayText');
+  inp.style.transform = 'none';
+  inp.style.left = (_drag.origLeft + e.clientX - _drag.startX) + 'px';
+  inp.style.top = (_drag.origTop + e.clientY - _drag.startY) + 'px';
+  _updateHandle();
+}
+function _onDragEnd() {
+  _drag = null;
+  document.removeEventListener('mousemove', _onDragMove);
+  document.removeEventListener('mouseup', _onDragEnd);
+  if (typeof saveState === 'function') saveState();
+}
+$('vidResizeHandle').addEventListener('mousedown', e => {
+  e.preventDefault(); e.stopPropagation();
+  const inp = $('vidOverlayText');
+  const startX = e.clientX;
+  const startW = inp.offsetWidth;
+  const startFont = parseInt(getComputedStyle(inp).fontSize) || 22;
+  _resize = { startX, startW, startFont };
+  document.addEventListener('mousemove', _onResizeMove);
+  document.addEventListener('mouseup', _onResizeEnd);
+});
+function _onResizeMove(e) {
+  if (!_resize) return;
+  const inp = $('vidOverlayText');
+  const dx = e.clientX - _resize.startX;
+  const newW = Math.max(80, _resize.startW + dx);
+  inp.style.width = newW + 'px';
+  const newFont = Math.max(12, Math.min(120, Math.round(_resize.startFont * (newW / _resize.startW))));
+  inp.style.fontSize = newFont + 'px';
+  $('vidTextSize').value = newFont;
+  $('vidTextSizeVal').textContent = newFont;
+  _updateHandle();
+}
+function _onResizeEnd() {
+  _resize = null;
+  document.removeEventListener('mousemove', _onResizeMove);
+  document.removeEventListener('mouseup', _onResizeEnd);
+  if (typeof saveState === 'function') saveState();
+}
+$('vidOverlayText').addEventListener('focus', _updateHandle);
+new MutationObserver(_updateHandle).observe($('vidOverlayText'), { attributes:true, attributeFilter:['style'] });
 
 // Enter → confirm text, click ra ngoài → ẩn
 $('vidOverlayText').addEventListener('blur', () => {
   if (!$('vidOverlayText').value.trim()) $('vidOverlayText').style.display = 'none';
 });
 $('vidOverlayText').addEventListener('keydown', e => { if (e.key === 'Enter') $('vidOverlayText').blur(); });
-
 $('vidTextSize').addEventListener('input', () => { $('vidTextSizeVal').textContent = $('vidTextSize').value; $('vidOverlayText').style.fontSize = $('vidTextSize').value + 'px'; });
 $('vidTextColor').addEventListener('input', () => { $('vidOverlayText').style.color = $('vidTextColor').value; });
-
 async function loadVideoAudioList() {
   try {
     const res = await fetch('/api/history');
@@ -1461,7 +1425,6 @@ async function loadVideoAudioList() {
     if (cur) sel.value = cur;
   } catch(e) {}
 }
-
 async function loadVideoList() {
   const list = $('vidList');
   try {
@@ -1483,13 +1446,11 @@ async function loadVideoList() {
     `).join('');
   } catch(e) { list.innerHTML = '<div style="font-size:13px;color:var(--muted);">Lỗi tải danh sách video</div>'; }
 }
-
 async function delVideo(name) {
   if (!confirm('Xóa video "' + name + '"?')) return;
   await fetch('/api/video/' + encodeURIComponent(name), { method: 'DELETE' });
   loadVideoList();
 }
-
 $('btnVidRender').addEventListener('click', async () => {
   if (!vidImageURL) { alert('Chọn ảnh nền trước'); return; }
   if (!$('vidAudioSelect').value) { alert('Chọn audio trước'); return; }
@@ -1510,7 +1471,6 @@ $('btnVidRender').addEventListener('click', async () => {
         text_color: $('vidTextColor').value,
         text_size: parseInt($('vidTextSize').value),
         text_y: hasText ? Math.round(parseInt(input.style.top) / $('vidCanvas').offsetHeight * 100) : 85,
-        brightness: parseInt($('vidBrightness').value),
         output_name: $('vidOutputName').value.trim(),
         quality: $('vidQuality').value,
         fps: parseInt($('vidFps').value),
@@ -1520,7 +1480,6 @@ $('btnVidRender').addEventListener('click', async () => {
     });
     const data = await res.json();
     if (!data.id) { throw new Error(data.error || 'Không tạo được job'); }
-    
     // Poll progress
     let done = false;
     while (!done) {
@@ -1546,7 +1505,6 @@ $('btnVidRender').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = 'Tạo video';
   setTimeout(() => { $('vidProgress').style.display = 'none'; }, 5000);
 });
-
 // ---------- AUTO-SAVE chống mất dữ liệu khi F5 / đóng mở lại ----------
 const LS_KEY = 'tts_studio_state';
 function collectState() {
@@ -1563,7 +1521,6 @@ function collectState() {
       textTop: $('vidOverlayText').style.top,
       color: $('vidTextColor').value,
       size: $('vidTextSize').value,
-      bright: $('vidBrightness').value,
       quality: $('vidQuality').value, fps: $('vidFps').value,
       crf: $('vidCrf').value, preset: $('vidPreset').value,
       outName: $('vidOutputName').value,
@@ -1604,9 +1561,8 @@ function restoreState() {
       vidImageURL = v.img;
       $('vidCanvas').style.display = '';
       $('vidImgEl').src = v.img;
-      $('vidImgEl').onerror = () => { vidImageURL = null; $('vidCanvas').style.display = 'none'; $('vidTextSettings').style.display = 'none'; $('vidBrightSettings').style.display = 'none'; };
+      $('vidImgEl').onerror = () => { vidImageURL = null; $('vidCanvas').style.display = 'none'; $('vidTextSettings').style.display = 'none';  };
       $('vidTextSettings').style.display = '';
-      $('vidBrightSettings').style.display = '';
     }
     if (v.text) $('vidOverlayText').value = v.text;
     if (v.textShown) {
@@ -1616,7 +1572,6 @@ function restoreState() {
     }
     if (v.color) { $('vidTextColor').value = v.color; $('vidOverlayText').style.color = v.color; }
     if (v.size) { $('vidTextSize').value = v.size; $('vidTextSizeVal').textContent = v.size; $('vidOverlayText').style.fontSize = v.size + 'px'; }
-    if (v.bright) $('vidBrightness').value = v.bright;
     if (v.quality) $('vidQuality').value = v.quality;
     if (v.fps) $('vidFps').value = v.fps;
     if (v.crf) $('vidCrf').value = v.crf;
@@ -1630,7 +1585,7 @@ function restoreState() {
   }
 }
 ['textInput','speedInput','volInput','pitchInput','eqInput','setSpeed','setVol','setPitch','setEq','setPause','setPauseComma','setPausePara',
- 'vidOverlayText','vidTextColor','vidTextSize','vidBrightness','vidQuality','vidFps','vidCrf','vidPreset','vidOutputName','vidAudioSelect']
+ 'vidOverlayText','vidTextColor','vidTextSize','vidQuality','vidFps','vidCrf','vidPreset','vidOutputName','vidAudioSelect']
   .forEach(id => {
     const el = $(id);
     if (!el) return;
@@ -1648,7 +1603,6 @@ $('dubFilePicker').addEventListener('change', e => {
   rd.onload = () => { $('dubSrtInput').value = rd.result; dubParse(); };
   rd.readAsText(f, 'utf-8');
 });
-
 function dubParse() {
   const srt = $('dubSrtInput').value;
   fetch('/api/dubbing/parse', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({srt})})
@@ -1672,20 +1626,17 @@ function dubParse() {
       $('dubMsg').textContent = cues.length ? `Đã đọc ${cues.length} cue.` : 'Không tìm thấy cue nào trong SRT.';
     }).catch(e => { $('dubMsg').textContent = 'Lỗi parse: ' + e; });
 }
-
 function fmtT(s) {
   s = parseFloat(s) || 0;
   const m = Math.floor(s / 60), sec = (s - m * 60).toFixed(2).padStart(5, '0');
   return `${m}:${sec}`;
 }
-
 function dubCollect() {
   return [...document.querySelectorAll('#dubTbody input')].map((el, idx) => ({
     i: idx + 1, start: parseFloat(el.dataset.s), end: parseFloat(el.dataset.e),
     text: el.value.trim()
   })).filter(c => c.text);
 }
-
 let dubPollTimer = null;
 function dubRender() {
   const cues = dubCollect();
@@ -1707,7 +1658,6 @@ function dubRender() {
       dubPollTimer = setInterval(() => dubPoll(d.id), 1500);
     }).catch(e => { $('dubMsg').textContent = 'Lỗi: ' + e; });
 }
-
 function dubPoll(id) {
   fetch('/api/dubbing/status/' + id).then(r => r.json()).then(j => {
     if (j.total) $('dubBar').style.width = Math.round(100 * (j.progress || 0) / j.total) + '%';
