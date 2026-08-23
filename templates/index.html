@@ -53,7 +53,7 @@ body{
 .userinfo .ue{font-size:11px;color:var(--muted);}
 
 /* ---------- MAIN ---------- */
-.main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;}
 .topbar{
   display:flex;align-items:center;justify-content:space-between;
   padding:14px 26px;border-bottom:1px solid var(--border);
@@ -126,6 +126,7 @@ textarea::placeholder{color:#5a6172;}
 
 /* ---------- PLAYER ---------- */
 .player{
+  flex-shrink:0;
   background:var(--card);border-top:1px solid var(--border);
   padding:12px 26px;display:flex;align-items:center;gap:18px;
 }
@@ -157,7 +158,7 @@ textarea::placeholder{color:#5a6172;}
 .btn-dl svg{width:16px;height:16px;fill:currentColor;}
 
 /* ---------- HISTORY ---------- */
-.view{display:none;flex:1;overflow-y:auto;padding:22px 26px;}
+.view{display:none;flex:1;overflow-y:auto;padding:22px 26px 90px;min-height:0;}
 .view.active{display:block;}
 .hist-item{
   background:var(--card);border:1px solid var(--border);border-radius:11px;
@@ -201,7 +202,7 @@ textarea::placeholder{color:#5a6172;}
 .hist-cb{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
 
 /* settings view */
-.setting-row{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:14px 18px;margin-bottom:10px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:14px 18px;margin-bottom:10px;min-height:68px;box-sizing:border-box;}
 .setting-row .lbl{font-size:14px;}
 .setting-row .desc{font-size:12px;color:var(--muted);margin-top:3px;}
 .setting-row input[type=number]{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;width:90px;outline:none;}
@@ -648,10 +649,24 @@ textarea::placeholder{color:#5a6172;}
     </div>
     <div class="setting-row">
       <div>
-        <div class="lbl">Khoảng lặng sau chấm / phẩy (giây)</div>
-        <div class="desc">Mặc định 0.18</div>
+        <div class="lbl">Khoảng lặng sau phẩy (giây)</div>
+        <div class="desc">Mặc định 0.12 — phẩy lướt nhanh</div>
       </div>
-      <input type="number" id="setPause" value="0.18" step="0.02" min="0.02" max="1.0">
+      <input type="number" id="setPauseComma" value="0.12" step="0.02" min="0.02" max="1.0">
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="lbl">Khoảng lặng sau chấm / ! / ? (giây)</div>
+        <div class="desc">Mặc định 0.28 — hết câu nghỉ rõ</div>
+      </div>
+      <input type="number" id="setPause" value="0.28" step="0.02" min="0.02" max="1.0">
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="lbl">Khoảng lặng giữa đoạn (giây)</div>
+        <div class="desc">Mặc định 0.8 — xuống dòng đôi (đoạn mới)</div>
+      </div>
+      <input type="number" id="setPausePara" value="0.8" step="0.1" min="0" max="2.0">
     </div>
     <div class="setting-row">
       <div>
@@ -1004,8 +1019,9 @@ $('btnGen').addEventListener('click', async () => {
     eq: $('eqInput').value,
     volume: parseFloat($('volInput').value) || 1.0,
     pitch: parseFloat($('pitchInput').value) || 0,
-    pause: parseFloat($('setPause').value) || 0.18,
-    pause_comma: parseFloat($('setPause').value) || 0.18,
+    pause: parseFloat($('setPause').value) || 0.28,
+    pause_comma: parseFloat($('setPauseComma').value) || 0.12,
+    pause_para: parseFloat($('setPausePara').value) || 0.8,
     noise_scale: parseFloat($('setNoise').value) || 0.667,
     noise_w: parseFloat($('setNoiseW').value) || 0.8,
   };
@@ -1535,10 +1551,10 @@ $('btnVidRender').addEventListener('click', async () => {
 const LS_KEY = 'tts_studio_state';
 function collectState() {
   return {
-    view: document.querySelector('.nav-item.active')?.dataset.view || 'home',
+    settings: { speed: $('setSpeed').value, vol: $('setVol').value, pitch: $('setPitch').value, eq: $('setEq').value, pause: $('setPause').value, pauseComma: $('setPauseComma').value, pausePara: $('setPausePara').value },
     text: $('textInput') ? $('textInput').value : '',
     home: { speed: $('speedInput').value, vol: $('volInput').value, pitch: $('pitchInput').value, eq: $('eqInput').value },
-    settings: { speed: $('setSpeed').value, vol: $('setVol').value, pitch: $('setPitch').value, eq: $('setEq').value },
+    settings: { speed: $('setSpeed').value, vol: $('setVol').value, pitch: $('setPitch').value, eq: $('setEq').value, pause: $('setPause').value, pauseComma: $('setPauseComma').value },
     video: {
       img: vidImageURL,
       text: $('vidOverlayText').value,
@@ -1578,6 +1594,9 @@ function restoreState() {
     if (s.settings.vol) $('setVol').value = s.settings.vol;
     if (s.settings.pitch) $('setPitch').value = s.settings.pitch;
     if (s.settings.eq) $('setEq').value = s.settings.eq;
+    if (s.settings.pause) $('setPause').value = s.settings.pause;
+    if (s.settings.pauseComma) $('setPauseComma').value = s.settings.pauseComma;
+    if (s.settings.pausePara) $('setPausePara').value = s.settings.pausePara;
   }
   if (s.video) {
     const v = s.video;
@@ -1610,7 +1629,7 @@ function restoreState() {
     if (item) item.click();
   }
 }
-['textInput','speedInput','volInput','pitchInput','eqInput','setSpeed','setVol','setPitch','setEq',
+['textInput','speedInput','volInput','pitchInput','eqInput','setSpeed','setVol','setPitch','setEq','setPause','setPauseComma','setPausePara',
  'vidOverlayText','vidTextColor','vidTextSize','vidBrightness','vidQuality','vidFps','vidCrf','vidPreset','vidOutputName','vidAudioSelect']
   .forEach(id => {
     const el = $(id);

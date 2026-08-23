@@ -184,13 +184,21 @@ def render_job(rid: str, text: str, settings: dict):
         text = re.sub(r"#[^\n]*", "", text).strip()
         # Render với kho đọc hiện tại — tuyệt đối không tự ý thêm từ mới vào kho
         text_proc = tts.vietnamize_text(text)
-        sentences = tts.split_into_sentences(text_proc)
-        total = len(sentences)
+        # Tách đoạn để hỗ trợ pause_para (xuống dòng đôi)
+        raw_paras = [p for p in re.split(r"\n\s*\n", text_proc) if p.strip()]
+        if not raw_paras:
+            raw_paras = [text_proc]
+        # Flatten sentences nhưng giữ biết ranh đoạn
+        para_sentences = []
+        for para in raw_paras:
+            para_sentences.append(tts.split_into_sentences(para))
+        total = sum(len(s) for s in para_sentences)
         RENDERS[rid]["total"] = total
 
         speed = float(settings.get("speed", 1.3))
-        pause = float(settings.get("pause", 0.18))
-        pause_comma = float(settings.get("pause_comma", 0.18))
+        pause = float(settings.get("pause", 0.28))
+        pause_comma = float(settings.get("pause_comma", 0.12))
+        pause_para = float(settings.get("pause_para", 0.8))
         noise_scale = float(settings.get("noise_scale", 0.667))
         noise_w = float(settings.get("noise_w", 0.8))
         eq = settings.get("eq", "none")
@@ -207,23 +215,32 @@ def render_job(rid: str, text: str, settings: dict):
         parts = []
         done = 0
         skipped = 0
-        for i, s in enumerate(sentences):
-            if not re.search(r"[A-Za-zÀ-ỹ0-9]", s):
-                continue
-            try:
-                wav = tts.synth_sentence(voice, syn, s)
-            except Exception:
-                skipped += 1
-                continue
-            parts.append(wav)
-            last_ch = s[-1] if s else ""
-            if last_ch in "，,。.":
-                parts.append(tts.silence(pause_comma if last_ch in "，," else pause))
-            done += 1
-            RENDERS[rid]["progress"] = done
-            RENDERS[rid]["message"] = f"Đang đọc câu {done}/{total}..."
-            if done % 5 == 0:
+        for para_idx, sentences in enumerate(para_sentences):
+            is_last_para = para_idx == len(para_sentences) - 1
+            for si, s in enumerate(sentences):
+                if not re.search(r"[A-Za-zÀ-ỹ0-9]", s):
+                    continue
+                try:
+                    wav = tts.synth_sentence(voice, syn, s)
+                except Exception:
+                    skipped += 1
+                    continue
+                parts.append(wav)
+                last_ch = s[-1] if s else ""
+                is_last_in_para = si == len(sentences) - 1
+                if is_last_in_para and not is_last_para:
+                    parts.append(tts.silence(pause_para))
+                elif last_ch in "，,":
+                    parts.append(tts.silence(pause_comma))
+                elif last_ch in ".!?…。！？":
+                    parts.append(tts.silence(pause))
+                elif last_ch in "，,。.":
+                    parts.append(tts.silence(pause_comma if last_ch in "，," else pause))
+                done += 1
+                RENDERS[rid]["progress"] = done
                 RENDERS[rid]["message"] = f"Đang đọc câu {done}/{total}..."
+                if done % 5 == 0:
+                    RENDERS[rid]["message"] = f"Đang đọc câu {done}/{total}..."
 
         if not parts:
             raise RuntimeError("Không có câu nào đọc được (text trống?)")
