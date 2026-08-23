@@ -446,12 +446,11 @@ textarea::placeholder{color:#5a6172;}
           <div style="font-size:13px;color:var(--muted);">Kéo thả ảnh hoặc nhấn chọn file (JPG, PNG, WEBP)</div>
         </div>
         <input type="file" id="vidImgPicker" accept="image/*" style="display:none;">
-        <div id="vidCanvas" style="display:none;position:relative;margin-top:12px;border-radius:0;overflow:hidden;border:1px solid var(--border);cursor:crosshair;" title="Click vào ảnh để ghi chữ — kéo để di chuyển, kéo góc để resize">
-          <img id="vidImgEl" style="width:100%;display:block;">
-          <input type="text" id="vidOverlayText" placeholder="Ghi chữ..." style="display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.32);color:#fff;border:2px dashed #fff;outline:1px dashed #000;outline-offset:-3px;border-radius:0;padding:6px 14px;font-size:22px;font-weight:700;text-align:center;min-width:120px;z-index:10;cursor:move;">
+        <div id="vidCanvas" style="display:none;position:relative;margin-top:12px;border-radius:0;overflow:hidden;border:1px solid var(--border);cursor:crosshair;user-select:none;" title="Kéo trên ảnh như Snipping để tạo textbox">
+          <img id="vidImgEl" draggable="false" ondragstart="return false;" style="width:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;">
+          <input type="text" id="vidOverlayText" placeholder="Ghi chữ..." style="display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.32);color:#fff;border:2px dashed #fff;outline:1px dashed #000;outline-offset:-3px;border-radius:0;padding:6px 14px;font-size:22px;font-weight:700;text-align:center;min-width:120px;z-index:10;cursor:move;user-select:text;">
           <div id="vidResizeHandle" style="display:none;position:absolute;width:12px;height:12px;background:#fff;border:1px solid #000;cursor:nwse-resize;z-index:11;box-shadow:0 0 2px rgba(0,0,0,0.6);"></div>
           <div id="vidSelectRect" style="display:none;position:absolute;border:1px dashed #fff;outline:1px dashed #000;background:rgba(255,255,255,0.08);pointer-events:none;z-index:8;"></div>
-        </div>
       </div>
       <!-- Cột phải: cài đặt + render -->
       <div style="flex:1;min-width:260px;">
@@ -1425,6 +1424,7 @@ function clearAllVidTexts(){
   if(typeof saveState==='function') saveState();
 }
 $('vidCanvas').addEventListener('mousedown', e => {
+  e.preventDefault();
   if (e.target === $('vidOverlayText') || e.target.id==='vidResizeHandle' || e.target.classList.contains('vidTextItem')) return;
   const inp=$('vidOverlayText');
   // nếu đang gõ dở, commit/discard trước
@@ -1455,17 +1455,14 @@ $('vidCanvas').addEventListener('mousedown', e => {
     r.style.display='none';
     _selectDrag=null;
     // nếu kéo quá nhỏ thì coi như click -> tạo box mặc định
-    const useW = w < 20 ? 160 : w;
-    const useH = h < 15 ? 0 : h;
-    const cx = w < 20 ? left : left + w/2;
-    const cy = h < 15 ? top : top + h/2;
+    // chỉ spawn khi kéo đủ lớn — click thường thì bỏ (theo yêu cầu bỏ click spawn)
+    if (w < 20 || h < 15) { r.style.display='none'; _selectDrag=null; return; }
     inp.style.display='block';
-    inp.style.left = cx + 'px';
-    inp.style.top = cy + 'px';
+    inp.style.left = (left + w/2) + 'px';
+    inp.style.top = (top + h/2) + 'px';
     inp.style.transform = 'translate(-50%,-50%)';
-    if (useW>20) inp.style.width = useW + 'px';
-    else inp.style.width = '';
-    if (useH>0) inp.style.height = useH + 'px';
+    inp.style.width = w + 'px';
+    inp.style.height = h + 'px';
     inp.value=''; vidActiveId=null; inp.focus();
     _updateHandle();
   };
